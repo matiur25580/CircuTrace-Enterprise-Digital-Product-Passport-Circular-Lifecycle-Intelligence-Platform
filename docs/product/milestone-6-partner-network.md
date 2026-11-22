@@ -43,13 +43,13 @@ Partner list filters: `type`, `status`, and `search`. Results are sorted by name
 
 ## Frontend integration
 
-The authenticated workspace renders a partner directory for the currently selected organization. It loads records from the organization-scoped API, supports server-side name search and type/status filters, provides a create form for managers, and shows partner profile details. Owner/admin users can suspend and reactivate records; read-only members and viewers cannot see management controls. The UI reports loading, error, and empty states and never substitutes sample records. Partner profiles with a primary contact email expose invitation creation, invitation history, and revocation to managers. The raw one-time token is displayed only in the inviter's active session so it can be copied and delivered out of band; invitation status shows pending, accepted, revoked, or expired.
+The authenticated workspace renders a partner directory for the currently selected organization. It loads records from the organization-scoped API, supports server-side name search and type/status filters, provides a create form for managers, and shows partner profile details. Owner/admin users can suspend and reactivate records; read-only members and viewers cannot see management controls. The UI reports loading, error, and empty states and never substitutes sample records. Partner profiles with a primary contact email expose invitation creation, invitation history, and revocation to managers. The raw one-time token is displayed only in the inviter's active session so it can be copied and delivered out of band; invitation status shows pending, accepted, revoked, or expired. The partner relationship workspace lets managers create directed connections between active partners, set optional descriptions and effective dates, filter by endpoint/type/status, and deactivate or reactivate links. All users with partner-read permission can browse the populated source-to-target relationship cards; the UI uses only API-backed organization data and shows loading, error, and empty states.
 
 ## Deferred
 
 - Email delivery and invitation reminder scheduling.
 - Partner-side accounts, cross-organization federation, delegated access, and a dedicated partner portal.
-- Partner relationship graph, supplier scorecards, certifications, risk, and compliance evidence.
+- Interactive node-and-edge network visualization, supplier scorecards, certifications, risk, and compliance evidence.
 - Immutable audit-event persistence and advanced pagination.
 
 No email is sent and no external organization is automatically granted access by creating a partner record or accepting an onboarding acknowledgement.
