@@ -1,5 +1,4 @@
 import { Router, type Router as ExpressRouter } from 'express';
-import { Types } from 'mongoose';
 import { z } from 'zod';
 import { AuthError } from '../auth/auth-error.js';
 import { authenticate } from '../auth/auth.middleware.js';
