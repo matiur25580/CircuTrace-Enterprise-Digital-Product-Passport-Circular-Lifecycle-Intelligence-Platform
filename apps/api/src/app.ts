@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import mongoose from 'mongoose';
@@ -5,6 +6,8 @@ import type { HealthResponse } from '@circutrace/shared-types';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import { env } from './config/env.js';
+import { AuthError } from './auth/auth-error.js';
+import { authRouter } from './auth/auth.routes.js';
 
 export const app: Express = express();
 
@@ -12,6 +15,7 @@ app.disable('x-powered-by');
 app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
 app.use((request, response, next) => {
   const startedAt = Date.now();
   response.on('finish', () => {
@@ -35,6 +39,15 @@ app.use(
     legacyHeaders: false,
   }),
 );
+app.use(
+  '/api/v1/auth',
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 30,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+  }),
+);
 
 app.get('/api/v1/health', (_request, response) => {
   const health: HealthResponse = {
@@ -52,11 +65,34 @@ app.get('/api/v1/ready', (_request, response) => {
   });
 });
 
+app.use('/api/v1/auth', authRouter);
+
 app.use((_request, response) => {
   response.status(404).json({
     error: {
       code: 'NOT_FOUND',
       message: 'The requested resource was not found.',
     },
+  });
+});
+
+app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
+  if (error instanceof AuthError) {
+    response.status(error.statusCode).json({
+      error: { code: error.code, message: error.message },
+    });
+    return;
+  }
+
+  if (error instanceof SyntaxError && 'status' in error && error.status === 400) {
+    response.status(400).json({
+      error: { code: 'INVALID_JSON', message: 'The request body contains invalid JSON.' },
+    });
+    return;
+  }
+
+  console.error('Unhandled API error', error);
+  response.status(500).json({
+    error: { code: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred.' },
   });
 });
