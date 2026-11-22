@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getAccessToken, listOrganizations, login, logout, refreshSession, setAccessToken } from './api';
+import { createPartner, getAccessToken, listOrganizations, listPartners, login, logout, refreshSession, setAccessToken } from './api';
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
@@ -44,20 +44,20 @@ describe('CircuTrace browser API client', () => {
 describe('partner directory API', () => {
   beforeEach(() => { setAccessToken('workspace-token'); });
   it('loads partners with encoded organization scope and active filters', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: { partners: [{ _id: 'p1', name: 'Northstar', type: 'supplier', status: 'active' }] } }));
-    const { listPartners } = await import('./api');
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ data: { partners: [{ _id: 'p1', name: 'Northstar', type: 'supplier', status: 'active' }] } }));
+    vi.stubGlobal('fetch', fetchMock);
     const items = await listPartners('org/one', { search: 'north star', type: 'supplier', status: 'active' });
     expect(items).toHaveLength(1);
-    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('/organizations/org%2Fone/partners?');
-    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('search=north+star');
-    expect(new Headers(vi.mocked(fetch).mock.calls[0][1]?.headers).get('authorization')).toBe('Bearer workspace-token');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/organizations/org%2Fone/partners?');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('search=north+star');
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('authorization')).toBe('Bearer workspace-token');
   });
   it('creates a partner using the organization-scoped API and JSON payload', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ data: { partner: { _id: 'p2', name: 'New Supplier', type: 'supplier', status: 'active' } } }, 201));
-    const { createPartner } = await import('./api');
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ data: { partner: { _id: 'p2', name: 'New Supplier', type: 'supplier', status: 'active' } } }, 201));
+    vi.stubGlobal('fetch', fetchMock);
     const partner = await createPartner('org1', { name: 'New Supplier', type: 'supplier' });
     expect(partner._id).toBe('p2');
     expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('/organizations/org1/partners');
-    expect(vi.mocked(fetch).mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ name: 'New Supplier', type: 'supplier' }) });
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ name: 'New Supplier', type: 'supplier' }) });
   });
 });
