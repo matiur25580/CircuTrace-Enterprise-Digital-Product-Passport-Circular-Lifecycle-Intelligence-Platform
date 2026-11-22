@@ -26,7 +26,8 @@ Milestones are gated by working code, automated verification, and documentation 
 ## Current milestone notes
 
 - **Milestone 1:** Architecture and documentation foundation committed to `main`.
-- **Milestone 2:** Workspace, React/Vite web shell, Express API, shared packages, MongoDB Compose setup, environment examples, and CI workflow are committed on `feat/milestone-2-mern-foundation`. GitHub Actions run [45027009253](https://github.com/matiur25580/CircuTrace-Enterprise-Digital-Product-Passport-Circular-Lifecycle-Intelligence-Platform/actions/runs/45027009253) passed install, lint, typecheck, tests, and build. The PR remains draft for review. A generated `pnpm-lock.yaml` is not yet committed; add it before relying on frozen-lockfile installs.
+- **Milestone 2:** Workspace, React/Vite web shell, Express API, shared packages, MongoDB Compose setup, environment examples, and CI workflow are committed on `feat/milestone-2-mern-foundation`. GitHub Actions run [45027098116](https://github.com/matiur25580/CircuTrace-Enterprise-Digital-Product-Passport-Circular-Lifecycle-Intelligence-Platform/actions/runs/45027098116) passed install, lint, typecheck, tests, and build. Draft PR #1 remains open. A generated `pnpm-lock.yaml` is not yet committed; add it before relying on frozen-lockfile installs.
+- **Milestone 3 (implementation branch):** Registration, login, bcrypt password hashing, signed short-lived access tokens, opaque refresh-token rotation with hashed persistence and reuse detection, logout, protected `/me`, and per-user session listing/revocation are implemented on `feat/milestone-3-enterprise-auth`. CI verification is pending. Do not mark the milestone complete until the workflow passes.
 
 ## Delivery rules
 
