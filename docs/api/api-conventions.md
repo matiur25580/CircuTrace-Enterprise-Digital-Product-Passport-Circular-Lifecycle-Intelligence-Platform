@@ -25,6 +25,22 @@ Successful collection responses should include `data` and pagination metadata wh
 
 Use appropriate status codes, including 201 for creation, 202 for accepted asynchronous work, 400 for malformed input, 401 for unauthenticated, 403 for unauthorized, 404 for unavailable resources, 409 for conflicts, 422 for semantically invalid input, and 429 for rate limits.
 
+## Authentication endpoints
+
+The initial identity routes are mounted at `/api/v1/auth`:
+
+| Method | Path | Purpose | Access |
+| --- | --- | --- | --- |
+| POST | `/register` | Create an account and initial session | Public, rate limited |
+| POST | `/login` | Authenticate and create a session | Public, rate limited |
+| POST | `/refresh` | Rotate the HttpOnly refresh cookie | Refresh cookie |
+| POST | `/logout` | Revoke the refresh session and clear cookie | Refresh cookie if present |
+| GET | `/me` | Return the authenticated identity | Bearer access token |
+| GET | `/sessions` | List active sessions for the caller | Bearer access token |
+| DELETE | `/sessions/:sessionId` | Revoke one of the caller's sessions | Bearer access token |
+
+Registration requires a display name, email, and password of at least 12 characters (maximum 72 UTF-8 bytes). Login returns a short-lived bearer access token; refresh credentials are never included in JSON. Auth errors use stable codes and safe messages. These endpoints do not yet implement email verification, password recovery, MFA, or tenant-scoped permissions.
+
 ## Security requirements
 
 - Authenticate before accessing protected resources.
