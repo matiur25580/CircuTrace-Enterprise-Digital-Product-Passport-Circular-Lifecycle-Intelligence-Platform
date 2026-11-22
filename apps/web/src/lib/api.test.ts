@@ -60,4 +60,12 @@ describe('partner directory API', () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain('/organizations/org1/partners');
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ name: 'New Supplier', type: 'supplier' }) });
   });
+  it('updates a partner profile using PATCH and the organization-scoped partner identifier', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ data: { partner: { _id: 'p2', name: 'Updated Supplier', type: 'supplier', status: 'active' } } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const partner = await updatePartner('org1', 'p2', { name: 'Updated Supplier' });
+    expect(partner.name).toBe('Updated Supplier');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/organizations/org1/partners/p2');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ name: 'Updated Supplier' }) });
+  });
 });

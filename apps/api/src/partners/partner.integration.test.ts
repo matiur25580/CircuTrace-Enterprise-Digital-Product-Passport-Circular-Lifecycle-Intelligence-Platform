@@ -6,6 +6,7 @@ import { UserModel } from '../models/user.model.js';
 import { InvitationModel } from '../organizations/invitation.model.js';
 import { MembershipModel } from '../organizations/membership.model.js';
 import { OrganizationModel } from '../organizations/organization.model.js';
+import { PartnerInvitationModel } from './partner-invitation.model.js';
 import { PartnerModel } from './partner.model.js';
 
 const mongoUri = process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/circutrace_test';
@@ -18,7 +19,7 @@ describe('partner network tenant boundaries (MongoDB integration)', () => {
   beforeAll(async () => { await mongoose.connect(mongoUri); });
   beforeEach(async () => {
     await Promise.all([
-      PartnerModel.deleteMany({}), InvitationModel.deleteMany({}), MembershipModel.deleteMany({}),
+      PartnerInvitationModel.deleteMany({}), PartnerModel.deleteMany({}), InvitationModel.deleteMany({}), MembershipModel.deleteMany({}),
       OrganizationModel.deleteMany({}), UserModel.deleteMany({}),
     ]);
   });
@@ -85,5 +86,50 @@ describe('partner network tenant boundaries (MongoDB integration)', () => {
     expect(suspended.body.data.partner.status).toBe('suspended');
     const filtered = await request(app).get(`/api/v1/organizations/${orgId}/partners?status=active`).set('Authorization', `Bearer ${owner}`);
     expect(filtered.body.data.partners).toHaveLength(0);
+  });
+
+  it('creates hashed, email-bound partner invitations and accepts each token once', async () => {
+    const owner = await register('partner-invite-owner@example.com');
+    const contact = await register('supplier-contact@example.com');
+    const wrongUser = await register('other-contact@example.com');
+    const organization = await request(app).post('/api/v1/organizations').set('Authorization', `Bearer ${owner}`).send({ name: 'Partner Invite Tenant' });
+    const orgId = organization.body.data.organization._id as string;
+    const partnerResponse = await request(app).post(`/api/v1/organizations/${orgId}/partners`).set('Authorization', `Bearer ${owner}`).send({
+      name: 'Trusted Supplier', type: 'supplier', contact: { name: 'Supplier Contact', email: 'SUPPLIER-CONTACT@example.com' },
+    });
+    const partnerId = partnerResponse.body.data.partner._id as string;
+    const path = `/api/v1/organizations/${orgId}/partners/${partnerId}/invitations`;
+    const created = await request(app).post(path).set('Authorization', `Bearer ${owner}`).send({});
+    expect(created.status).toBe(201);
+    expect(created.body.data.invitation.email).toBe('supplier-contact@example.com');
+    expect(created.body.data.token).toHaveLength(43);
+    const persisted = await PartnerInvitationModel.findOne({ partnerId }).select('+tokenHash').lean().exec();
+    expect(persisted?.tokenHash).not.toBe(created.body.data.token);
+    const listed = await request(app).get(path).set('Authorization', `Bearer ${owner}`);
+    expect(listed.body.data.invitations).toHaveLength(1);
+    expect(listed.body.data.invitations[0].tokenHash).toBeUndefined();
+    const wrong = await request(app).post('/api/v1/partner-invitations/accept').set('Authorization', `Bearer ${wrongUser}`).send({ token: created.body.data.token });
+    expect(wrong.status).toBe(403);
+    const accepted = await request(app).post('/api/v1/partner-invitations/accept').set('Authorization', `Bearer ${contact}`).send({ token: created.body.data.token });
+    expect(accepted.status).toBe(200);
+    expect(accepted.body.data.accepted).toBe(true);
+    const replay = await request(app).post('/api/v1/partner-invitations/accept').set('Authorization', `Bearer ${contact}`).send({ token: created.body.data.token });
+    expect(replay.status).toBe(400);
+    const acceptedRecord = await PartnerInvitationModel.findById(persisted?._id).lean().exec();
+    expect(acceptedRecord?.acceptedByUserId?.toString()).toBe((await UserModel.findOne({ email: 'supplier-contact@example.com' }))?._id.toString());
+  });
+
+  it('revokes partner invitations and prevents subsequent acceptance', async () => {
+    const owner = await register('partner-revoke-owner@example.com');
+    const contact = await register('partner-revoke-contact@example.com');
+    const organization = await request(app).post('/api/v1/organizations').set('Authorization', `Bearer ${owner}`).send({ name: 'Partner Revoke Tenant' });
+    const orgId = organization.body.data.organization._id as string;
+    const partner = await request(app).post(`/api/v1/organizations/${orgId}/partners`).set('Authorization', `Bearer ${owner}`).send({ name: 'Revocable Supplier', type: 'supplier', contact: { email: 'partner-revoke-contact@example.com' } });
+    const path = `/api/v1/organizations/${orgId}/partners/${partner.body.data.partner._id}/invitations`;
+    const created = await request(app).post(path).set('Authorization', `Bearer ${owner}`).send({});
+    const revoked = await request(app).delete(`${path}/${created.body.data.invitation.id}`).set('Authorization', `Bearer ${owner}`);
+    expect(revoked.status).toBe(204);
+    const accepted = await request(app).post('/api/v1/partner-invitations/accept').set('Authorization', `Bearer ${contact}`).send({ token: created.body.data.token });
+    expect(accepted.status).toBe(400);
   });
 });
