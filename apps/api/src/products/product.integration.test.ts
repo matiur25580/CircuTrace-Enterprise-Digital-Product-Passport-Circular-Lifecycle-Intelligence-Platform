@@ -55,6 +55,12 @@ describe('product and material registry (MongoDB integration)', () => {
     expect(crossTenant.status).toBe(404);
     const wrongParent = await request(app).get(`/api/v1/organizations/${orgId}/products/${productId}/components/000000000000000000000001/materials`).set('Authorization', `Bearer ${owner}`);
     expect(wrongParent.status).toBe(404);
+    const invalidProductId = await request(app).get(`/api/v1/organizations/${orgId}/products/not-an-object-id/components/000000000000000000000001/materials`).set('Authorization', `Bearer ${owner}`);
+    expect(invalidProductId.status).toBe(404);
+    const invalidComponentId = await request(app).get(`/api/v1/organizations/${orgId}/products/${productId}/components/not-an-object-id/materials`).set('Authorization', `Bearer ${owner}`);
+    expect(invalidComponentId.status).toBe(404);
+    const invalidComponentCreate = await request(app).post(`/api/v1/organizations/${orgId}/products/${productId}/components/not-an-object-id/materials`).set('Authorization', `Bearer ${owner}`).send({ name: 'Invalid target', category: 'textile', mass: 10 });
+    expect(invalidComponentCreate.status).toBe(404);
   });
 
   it('enforces organization-local product SKU uniqueness and validates composition bounds', async () => {
