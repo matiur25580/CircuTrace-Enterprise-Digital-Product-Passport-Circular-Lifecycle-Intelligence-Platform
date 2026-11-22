@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { z } from 'zod';
 import { AuthError } from '../auth/auth-error.js';
 import { authenticate } from '../auth/auth.middleware.js';
 import { ORGANIZATION_ROLES } from './membership.model.js';
 import { acceptInvitation, archiveOrganization, changeMemberRole, createInvitation, createOrganization, getMembership, listMembers, listOrganizations, removeMember, revokeInvitation, updateOrganization } from './organization.service.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 router.use(authenticate);
 const objectId = /^[a-f\d]{24}$/i;
 const createSchema = z.object({ name: z.string().trim().min(2).max(160), slug: z.string().trim().min(2).max(80).optional(), legalName: z.string().trim().max(200).optional(), registrationNumber: z.string().trim().max(100).optional() }).strict();
