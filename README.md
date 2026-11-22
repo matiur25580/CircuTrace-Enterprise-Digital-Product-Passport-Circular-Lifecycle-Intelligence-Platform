@@ -83,7 +83,7 @@ docs/
 
 ## Application foundation
 
-The MERN workspace foundation is available on `feat/milestone-2-mern-foundation`; the identity and authentication foundation is available on `feat/milestone-3-enterprise-auth`. The API includes registration, login, refresh-token rotation, logout, protected identity and session-management endpoints. See [local development setup](docs/development/local-setup.md) and [authentication security design](docs/security/authentication.md).
+The MERN workspace foundation is available on `feat/milestone-2-mern-foundation`; the identity and authentication foundation is available on `feat/milestone-3-enterprise-auth` (draft PR #2). The API includes registration, login, refresh-token rotation, logout, protected identity and session-management endpoints. MongoDB-backed lifecycle integration tests and the latest CI verification passed. See [local development setup](docs/development/local-setup.md) and [authentication security design](docs/security/authentication.md).
 
 ## Documentation
 
