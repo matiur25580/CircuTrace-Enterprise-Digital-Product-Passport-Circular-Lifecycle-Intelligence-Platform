@@ -136,7 +136,7 @@ router.get('/evidence', async (request, response, next) => {
 router.get('/evidence/verify', async (request, response, next) => {
   try {
     const { organizationId, productId } = ids(request);
-    await scopedProduct(request.auth!.userId, organizationId, productId, 'products:read');
+    const product = await scopedProduct(request.auth!.userId, organizationId, productId, 'products:read');
     const records = await PassportEvidenceModel.find({ organizationId, productId })
       .sort({ sequence: 1 }).limit(1001).lean().exec();
     const truncated = records.length > 1000;
@@ -156,12 +156,15 @@ router.get('/evidence/verify', async (request, response, next) => {
       recordHash: record.recordHash
     }));
     const verification = verifyEvidenceChain(checked);
+    const productHeadMatches = checked.length === (product.evidenceSequence ?? 0)
+      && verification.headHash === (product.latestEvidenceHash ?? null);
     response.json({ data: { verification: {
       ...verification,
-      valid: verification.valid && !truncated,
+      productHeadMatches,
+      valid: verification.valid && productHeadMatches && !truncated,
       truncated,
       scope: 'ledger_integrity_only',
-      note: 'This check verifies sequence continuity and server-generated record hashes. It does not verify external file bytes, issuer identity, certificates, or digital signatures.'
+      note: 'This check verifies sequence continuity, the product-stored ledger head, and server-generated record hashes. It does not verify external file bytes, issuer identity, certificates, or digital signatures.'
     } } });
   } catch (error) { next(error); }
 });
@@ -228,6 +231,8 @@ router.get('/passport', async (request, response, next) => {
       previousRecordHash: record.previousRecordHash ?? null,
       recordHash: record.recordHash
     })));
+    const productHeadMatches = evidenceVerification.recordsChecked === (product.evidenceSequence ?? 0)
+      && evidenceVerification.headHash === (product.latestEvidenceHash ?? null);
     const passportProduct = {
       id: product._id,
       sku: product.sku,
@@ -260,7 +265,8 @@ router.get('/passport', async (request, response, next) => {
       })),
       evidenceLedger: {
         ...evidenceVerification,
-        valid: evidenceVerification.valid && !evidenceTruncated,
+        valid: evidenceVerification.valid && productHeadMatches && !evidenceTruncated,
+        productHeadMatches,
         truncated: evidenceTruncated,
         scope: 'ledger_integrity_only',
         note: 'Record hashes protect ledger metadata integrity. Referenced file bytes, issuer identity, and signatures are not independently verified.'
