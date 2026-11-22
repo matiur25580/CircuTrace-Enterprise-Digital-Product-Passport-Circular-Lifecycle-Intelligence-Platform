@@ -8,9 +8,10 @@ import { verifyPassword } from './password.js';
 
 const mongoUri = process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/circutrace_test';
 
-function readRefreshCookie(response: request.Response): string {
-  const cookies = response.headers['set-cookie'] as string[] | undefined;
-  const cookie = cookies?.find((value) => value.startsWith('circutrace_refresh='));
+function readRefreshCookie(response: { headers: Record<string, string | string[] | undefined> }): string {
+  const rawCookies = response.headers['set-cookie'];
+  const cookies = Array.isArray(rawCookies) ? rawCookies : rawCookies ? [rawCookies] : [];
+  const cookie = cookies.find((value) => value.startsWith('circutrace_refresh='));
   if (!cookie) throw new Error('Expected the API to issue an HttpOnly refresh cookie.');
   return cookie.split(';')[0];
 }
