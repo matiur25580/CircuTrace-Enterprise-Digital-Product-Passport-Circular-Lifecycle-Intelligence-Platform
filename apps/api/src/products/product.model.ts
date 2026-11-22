@@ -11,6 +11,8 @@ const productSchema = new Schema({
   category: { type: String, trim: true, maxlength: 120, default: null },
   brandPartnerId: { type: Schema.Types.ObjectId, ref: 'Partner', default: null },
   status: { type: String, enum: PRODUCT_STATUSES, default: 'draft', required: true },
+  evidenceSequence: { type: Number, min: 0, default: 0 },
+  latestEvidenceHash: { type: String, match: /^[a-f0-9]{64}$/, default: null },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   updatedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true });
