@@ -11,6 +11,13 @@ describe('API health endpoint', () => {
     expect(response.body.data.service).toBe('circutrace-api');
   });
 
+  it('reports not ready when the database is disconnected', async () => {
+    const response = await request(app).get('/api/v1/ready');
+
+    expect(response.status).toBe(503);
+    expect(response.body.data.status).toBe('not_ready');
+  });
+
   it('returns a safe not-found response', async () => {
     const response = await request(app).get('/api/v1/does-not-exist');
 
