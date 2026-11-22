@@ -140,7 +140,7 @@ Illustrative product and circularity workflow view. Synthetic values demonstrate
 
 ## 8. Engineering quality
 
-GitHub Actions provides build/test automation, CodeQL, secret scanning and dependency auditing. Review current advisory results before release. Remaining engineering priorities include committed frozen lockfiles, resolving residual dependency advisories, tenant authorization integration tests, end-to-end accessibility coverage, immutable action pinning, operational monitoring and backup/restore testing.
+GitHub Actions provides build/test automation, CodeQL, secret scanning and dependency auditing. Review current advisory results before release. Committed lockfiles and frozen dependency installs are enforced in CI; the latest audit reports zero known vulnerabilities. Remaining engineering priorities include ongoing advisory monitoring, tenant authorization integration tests, end-to-end accessibility coverage, immutable action pinning, operational monitoring and backup/restore testing.
 
 ## 9. Documentation
 
