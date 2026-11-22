@@ -20,16 +20,16 @@ function scope(organizationParam?: string, partnerParam?: string) {
 }
 
 router.get('/', async (request, response) => {
-  const { organizationId, partnerId } = scope(request.params.organizationId, request.params.partnerId);
+  const { organizationId, partnerId } = scope((request.params as { organizationId?: string; partnerId?: string }).organizationId, (request.params as { organizationId?: string; partnerId?: string }).partnerId);
   response.json({ data: { invitations: await listPartnerInvitations(actor(request), organizationId, partnerId) } });
 });
 router.post('/', async (request, response) => {
   if (Object.keys(request.body ?? {}).length) throw new AuthError('VALIDATION_ERROR', 'This endpoint does not accept a request body.', 400);
-  const { organizationId, partnerId } = scope(request.params.organizationId, request.params.partnerId);
+  const { organizationId, partnerId } = scope((request.params as { organizationId?: string; partnerId?: string }).organizationId, (request.params as { organizationId?: string; partnerId?: string }).partnerId);
   response.status(201).json({ data: await createPartnerInvitation(actor(request), organizationId, partnerId) });
 });
 router.delete('/:invitationId', async (request, response) => {
-  const { organizationId, partnerId } = scope(request.params.organizationId, request.params.partnerId);
+  const { organizationId, partnerId } = scope((request.params as { organizationId?: string; partnerId?: string }).organizationId, (request.params as { organizationId?: string; partnerId?: string }).partnerId);
   await revokePartnerInvitation(actor(request), organizationId, partnerId, request.params.invitationId ?? '');
   response.status(204).send();
 });
