@@ -24,7 +24,7 @@ All endpoints require a valid access token.
 
 List filters: `type`, `status`, and `search`. Results are sorted by name and capped at 100 records.
 
-## Deferred
+## Frontend integration\n\nThe authenticated workspace renders a partner directory for the currently selected organization. It loads records from the organization-scoped API, supports server-side name search and type/status filters, provides a create form for managers, and shows partner profile details. Owner/admin users can suspend and reactivate records; read-only members and viewers cannot see management controls. The UI reports loading, error, and empty states and never substitutes sample records.\n\n## Deferred
 
 - External partner invitation delivery and acceptance.
 - Partner-side accounts, cross-organization federation, and delegated access.

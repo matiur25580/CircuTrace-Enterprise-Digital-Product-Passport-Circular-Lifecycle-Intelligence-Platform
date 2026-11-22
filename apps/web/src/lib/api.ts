@@ -9,15 +9,30 @@ export interface AuthUser {
   emailVerified: boolean;
   createdAt: string;
 }
-export type PartnerType = 'supplier' | 'manufacturer' | 'brand' | 'logistics' | 'service_provider' | 'recycler' | 'other';
-export type PartnerStatus = 'active' | 'suspended' | 'archived';
-export interface Partner { _id: string; name: string; legalName?: string | null; type: PartnerType; status: PartnerStatus; website?: string | null; countryCode?: string | null; externalReference?: string | null; notes?: string | null; contact?: { name?: string | null; email?: string | null; role?: string | null }; createdAt: string; updatedAt: string; }
 export interface Organization {
   _id: string;
   name: string;
   slug: string;
   role: 'owner' | 'admin' | 'member' | 'viewer';
 }
+export type PartnerType = 'supplier' | 'manufacturer' | 'brand' | 'logistics' | 'service_provider' | 'recycler' | 'other';
+export type PartnerStatus = 'active' | 'suspended' | 'archived';
+export interface Partner {
+  _id: string;
+  organizationId: string;
+  name: string;
+  legalName?: string | null;
+  type: PartnerType;
+  status: PartnerStatus;
+  website?: string | null;
+  countryCode?: string | null;
+  contact?: { name?: string | null; email?: string | null; role?: string | null };
+  externalReference?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+export type PartnerInput = Pick<Partner, 'name' | 'type'> & Partial<Pick<Partner, 'legalName' | 'website' | 'countryCode' | 'contact' | 'externalReference' | 'notes'>>;
 interface AuthPayload {
   accessToken: string;
   tokenType: 'Bearer';
@@ -36,7 +51,7 @@ export function setAccessToken(token: string | null) { accessToken = token; }
 export function getAccessToken() { return accessToken; }
 
 async function parseResponse<T>(response: Response): Promise<T> {
-  if (response.status === 204) return undefined as T;
+  if (response.status ===  204) return undefined as T;
   const payload = await response.json().catch(() => null) as ApiEnvelope<T> | ApiError | null;
   if (!response.ok) {
     const failure = payload && 'error' in payload ? payload.error : undefined;
@@ -50,11 +65,7 @@ async function rawRequest<T>(path: string, init: RequestInit = {}, token: string
   const headers = new Headers(init.headers);
   if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json');
   if (token) headers.set('authorization', `Bearer ${token}`);
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers,
-    credentials: 'include',
-  });
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers, credentials: 'include' });
   return parseResponse<T>(response);
 }
 
@@ -70,9 +81,8 @@ export async function refreshSession(): Promise<AuthPayload> {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  try {
-    return await rawRequest<T>(path, init);
-  } catch (error) {
+  try { return await rawRequest<T>(path, init); }
+  catch (error) {
     if (!(error instanceof ApiClientError) || error.status !== 401 || path === '/auth/refresh' || path === '/auth/login' || path === '/auth/register' || path === '/auth/logout') throw error;
     const refreshed = await refreshSession();
     return rawRequest<T>(path, init, refreshed.accessToken);
@@ -101,16 +111,25 @@ export async function createOrganization(input: { name: string; slug?: string })
   const result = await request<{ organization: Organization; role: 'owner' }>('/organizations', { method: 'POST', body: JSON.stringify(input) });
   return { ...result.organization, role: result.role };
 }
-
-export async function listPartners(organizationId: string, search = ''): Promise<Partner[]> {
+export async function listPartners(organizationId: string, filters: { search?: string; type?: PartnerType | ''; status?: PartnerStatus | '' } = {}): Promise<Partner[]> {
   const params = new URLSearchParams();
-  if (search.trim()) params.set('search', search.trim());
-  const suffix = params.size ? `?${params.toString()}` : '';
-  const result = await request<{ partners: Partner[] }>(`/organizations/${encodeURIComponent(organizationId)}/partners${suffix}`);
+  if (filters.search?.trim()) params.set('search', filters.search.trim());
+  if (filters.type) params.set('type', filters.type);
+  if (filters.status) params.set('status', filters.status);
+  const query = params.size ? `?${params.toString()}` : '';
+  const result = await request<{ partners: Partner[] }>(`/organizations/${encodeURIComponent(organizationId)}/partners${query}`);
   return result.partners;
 }
-export async function createPartner(organizationId: string, input: { name: string; type: PartnerType; externalReference?: string; countryCode?: string }): Promise<Partner> {
+export async function getPartner(organizationId: string, partnerId: string): Promise<Partner> {
+  const result = await request<{ partner: Partner }>(`/organizations/${encodeURIComponent(organizationId)}/partners/${encodeURIComponent(partnerId)}`);
+  return result.partner;
+}
+export async function createPartner(organizationId: string, input: PartnerInput): Promise<Partner> {
   const result = await request<{ partner: Partner }>(`/organizations/${encodeURIComponent(organizationId)}/partners`, { method: 'POST', body: JSON.stringify(input) });
+  return result.partner;
+}
+export async function updatePartner(organizationId: string, partnerId: string, input: Partial<PartnerInput>): Promise<Partner> {
+  const result = await request<{ partner: Partner }>(`/organizations/${encodeURIComponent(organizationId)}/partners/${encodeURIComponent(partnerId)}`, { method: 'PATCH', body: JSON.stringify(input) });
   return result.partner;
 }
 export async function updatePartnerStatus(organizationId: string, partnerId: string, status: PartnerStatus): Promise<Partner> {
