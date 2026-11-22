@@ -1,0 +1,8 @@
+title = "CircuTrace Gitleaks configuration"
+
+[allowlist]
+description = "The documented placeholder in apps/api/.env.example is not a credential."
+regexTarget = "secret"
+regexes = [
+  '''^replace-this-with-a-unique-secret-at-least-32-characters$'''
+]
