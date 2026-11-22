@@ -88,7 +88,7 @@ export async function listMembers(userId: string, organizationId: string) {
 
 export async function changeMemberRole(actorId: string, organizationId: string, membershipId: string, role: OrganizationRole) {
   const actor = await requirePermission(actorId, organizationId, 'members:manage');
-  if (actor.role !== 'owner' && role === 'owner') throw new AuthError('FORBIDDEN', 'Only an owner can assign the owner role.', 403);
+  if (role === 'owner') throw new AuthError('OWNER_ROLE_RESERVED', 'Ownership changes require a dedicated, atomic ownership-transfer workflow.', 409);
   const target = await MembershipModel.findOne({ _id: membershipId, organizationId, status: 'active' }).exec();
   if (!target) throw new AuthError('MEMBERSHIP_NOT_FOUND', 'The membership was not found.', 404);
   if (target.role === 'owner') throw new AuthError('OWNER_MEMBERSHIP_PROTECTED', 'Ownership transfer must be completed through the dedicated ownership workflow.', 409);
@@ -127,13 +127,27 @@ export async function acceptInvitation(userId: string, token: string) {
   const user = await UserModel.findById(userId).select('email').lean().exec();
   if (!user) throw new AuthError('ACCOUNT_UNAVAILABLE', 'This account is currently unavailable.', 403);
   const invitation = await InvitationModel.findOneAndUpdate(
-    { tokenHash: hashToken(token), acceptedAt: null, revokedAt: null, expiresAt: { $gt: new Date() } },
-    { $set: { acceptedAt: new Date() } }, { new: true },
+    {
+      tokenHash: hashToken(token),
+      email: user.email.trim().toLowerCase(),
+      acceptedAt: null,
+      revokedAt: null,
+      expiresAt: { $gt: new Date() },
+    },
+    { $set: { acceptedAt: new Date() } },
+    { new: true },
   ).exec();
-  if (!invitation) throw new AuthError('INVITATION_INVALID', 'The invitation is invalid, expired, or already used.', 400);
-  if (invitation.email !== user.email) {
+  if (!invitation) {
+    const matchingToken = await InvitationModel.findOne({ tokenHash: hashToken(token) }).select('email acceptedAt revokedAt expiresAt').lean().exec();
+    if (matchingToken && matchingToken.email !== user.email.trim().toLowerCase()) {
+      throw new AuthError('INVITATION_EMAIL_MISMATCH', 'Sign in with the email address that received this invitation.', 403);
+    }
+    throw new AuthError('INVITATION_INVALID', 'The invitation is invalid, expired, revoked, or already used.', 400);
+  }
+  const organization = await OrganizationModel.findOne({ _id: invitation.organizationId, status: 'active' }).select('_id').lean().exec();
+  if (!organization) {
     await InvitationModel.updateOne({ _id: invitation._id, acceptedAt: invitation.acceptedAt }, { $set: { acceptedAt: null } }).exec();
-    throw new AuthError('INVITATION_EMAIL_MISMATCH', 'Sign in with the email address that received this invitation.', 403);
+    throw new AuthError('ORGANIZATION_UNAVAILABLE', 'The organization is not accepting invitations.', 409);
   }
   try {
     await MembershipModel.create({

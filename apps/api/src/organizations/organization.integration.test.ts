@@ -64,6 +64,38 @@ describe('organization tenant boundaries (MongoDB integration)', () => {
     expect(memberList.body.data.members).toHaveLength(2);
   });
 
+  it('prevents assigning a second owner and preserves a single owner boundary', async () => {
+    const owner = await register('single-owner@example.com');
+    const member = await register('future-owner@example.com');
+    const org = await request(app).post('/api/v1/organizations').set('Authorization', `Bearer ${owner}`).send({ name: 'Single Owner Tenant' });
+    const orgId = org.body.data.organization._id as string;
+    const invite = await request(app).post(`/api/v1/organizations/${orgId}/invitations`).set('Authorization', `Bearer ${owner}`).send({ email: 'future-owner@example.com', role: 'member' });
+    await request(app).post('/api/v1/organizations/invitations/accept').set('Authorization', `Bearer ${member}`).send({ token: invite.body.data.token });
+    const membership = await MembershipModel.findOne({ organizationId: orgId, userId: (await UserModel.findOne({ email: 'future-owner@example.com' }))!._id });
+    const promotion = await request(app).patch(`/api/v1/organizations/${orgId}/members/${membership!._id}`).set('Authorization', `Bearer ${owner}`).send({ role: 'owner' });
+    expect(promotion.status).toBe(409);
+    expect(await MembershipModel.countDocuments({ organizationId: orgId, role: 'owner', status: 'active' })).toBe(1);
+  });
+
+  it('rejects revoked and expired invitations without creating memberships', async () => {
+    const owner = await register('invite-admin@example.com');
+    const invitee = await register('revoked-invitee@example.com');
+    const org = await request(app).post('/api/v1/organizations').set('Authorization', `Bearer ${owner}`).send({ name: 'Invitation Lifecycle Tenant' });
+    const orgId = org.body.data.organization._id as string;
+    const revoked = await request(app).post(`/api/v1/organizations/${orgId}/invitations`).set('Authorization', `Bearer ${owner}`).send({ email: 'revoked-invitee@example.com', role: 'member' });
+    const revokedId = revoked.body.data.invitation.id as string;
+    const revokeResponse = await request(app).delete(`/api/v1/organizations/${orgId}/invitations/${revokedId}`).set('Authorization', `Bearer ${owner}`);
+    expect(revokeResponse.status).toBe(204);
+    const revokedAcceptance = await request(app).post('/api/v1/organizations/invitations/accept').set('Authorization', `Bearer ${invitee}`).send({ token: revoked.body.data.token });
+    expect(revokedAcceptance.status).toBe(400);
+
+    const expired = await request(app).post(`/api/v1/organizations/${orgId}/invitations`).set('Authorization', `Bearer ${owner}`).send({ email: 'revoked-invitee@example.com', role: 'viewer' });
+    await InvitationModel.updateOne({ _id: expired.body.data.invitation.id }, { $set: { expiresAt: new Date(Date.now() - 1000) } });
+    const expiredAcceptance = await request(app).post('/api/v1/organizations/invitations/accept').set('Authorization', `Bearer ${invitee}`).send({ token: expired.body.data.token });
+    expect(expiredAcceptance.status).toBe(400);
+    expect(await MembershipModel.countDocuments({ organizationId: orgId, userId: (await UserModel.findOne({ email: 'revoked-invitee@example.com' }))!._id })).toBe(0);
+  });
+
   it('prevents members from changing organization settings or promoting themselves', async () => {
     const owner = await register('role-owner@example.com');
     const member = await register('role-member@example.com');
