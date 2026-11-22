@@ -210,9 +210,10 @@ router.get('/passport', async (request, response, next) => {
         .sort({ occurredAt: 1, _id: 1 }).lean().exec(),
       PassportEvidenceModel.find({ organizationId, productId })
         .select('lifecycleEventId sequence claimType claimDescription evidenceUri evidenceSha256 issuer issuedAt previousRecordHash recordHash verificationStatus createdAt recordedBy')
-        .sort({ sequence: 1 }).limit(1000).lean().exec(),
+        .sort({ sequence: 1 }).limit(1001).lean().exec(),
     ]);
-    const evidenceVerification = verifyEvidenceChain(evidenceRecords.map((record) => ({
+    const evidenceTruncated = evidenceRecords.length > 1000;
+    const evidenceVerification = verifyEvidenceChain(evidenceRecords.slice(0, 1000).map((record) => ({
       organizationId: String(record.organizationId),
       productId: String(record.productId),
       lifecycleEventId: record.lifecycleEventId ? String(record.lifecycleEventId) : null,
@@ -259,6 +260,8 @@ router.get('/passport', async (request, response, next) => {
       })),
       evidenceLedger: {
         ...evidenceVerification,
+        valid: evidenceVerification.valid && !evidenceTruncated,
+        truncated: evidenceTruncated,
         scope: 'ledger_integrity_only',
         note: 'Record hashes protect ledger metadata integrity. Referenced file bytes, issuer identity, and signatures are not independently verified.'
       },
