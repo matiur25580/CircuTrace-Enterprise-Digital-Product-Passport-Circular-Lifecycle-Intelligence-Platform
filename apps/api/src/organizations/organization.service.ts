@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import mongoose, { Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { AuthError } from '../auth/auth-error.js';
 import { UserModel } from '../models/user.model.js';
 import { InvitationModel } from './invitation.model.js';
