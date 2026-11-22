@@ -136,3 +136,29 @@ export async function updatePartnerStatus(organizationId: string, partnerId: str
   const result = await request<{ partner: Partner }>(`/organizations/${encodeURIComponent(organizationId)}/partners/${encodeURIComponent(partnerId)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
   return result.partner;
 }
+
+export interface PartnerInvitation {
+  _id: string;
+  email: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+}
+export interface CreatedPartnerInvitation {
+  invitation: { id: string; organizationId: string; partnerId: string; email: string; expiresAt: string; acceptedAt: null; revokedAt: null };
+  token: string;
+}
+export async function listPartnerInvitations(organizationId: string, partnerId: string): Promise<PartnerInvitation[]> {
+  const result = await request<{ invitations: PartnerInvitation[] }>(`/organizations/${encodeURIComponent(organizationId)}/partners/${encodeURIComponent(partnerId)}/invitations`);
+  return result.invitations;
+}
+export async function createPartnerInvitation(organizationId: string, partnerId: string): Promise<CreatedPartnerInvitation> {
+  return request<CreatedPartnerInvitation>(`/organizations/${encodeURIComponent(organizationId)}/partners/${encodeURIComponent(partnerId)}/invitations`, { method: 'POST' });
+}
+export async function revokePartnerInvitation(organizationId: string, partnerId: string, invitationId: string): Promise<void> {
+  await request<void>(`/organizations/${encodeURIComponent(organizationId)}/partners/${encodeURIComponent(partnerId)}/invitations/${encodeURIComponent(invitationId)}`, { method: 'DELETE' });
+}
+export async function acceptPartnerInvitation(token: string): Promise<{ accepted: true; partnerId: string; organizationId: string }> {
+  return request<{ accepted: true; partnerId: string; organizationId: string }>('/partner-invitations/accept', { method: 'POST', body: JSON.stringify({ token }) });
+}
