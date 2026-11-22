@@ -37,7 +37,7 @@ Prerequisites: Node.js 22+, pnpm 9.15.4 (Corepack recommended), Docker and Mongo
 
 ```bash
 corepack enable
-pnpm install
+pnpm install --frozen-lockfile
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 # Configure a unique AUTH_ACCESS_TOKEN_SECRET and local MONGODB_URI.
