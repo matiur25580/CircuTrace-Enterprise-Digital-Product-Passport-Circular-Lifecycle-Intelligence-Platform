@@ -27,7 +27,7 @@ List endpoints are bounded to 100 products or 200 child records. No arbitrary or
 
 ## Deferred
 
-- Product variants API and GTIN registry checksums/verification.
+- GTIN registry synchronization and external registry verification.
 - Lifecycle events, digital product passport snapshots, claims and evidence.
 - BOM import/export, mass-balance validation, unit conversion, and composition reconciliation.
 - Frontend product catalogue screens and audit-event persistence.
