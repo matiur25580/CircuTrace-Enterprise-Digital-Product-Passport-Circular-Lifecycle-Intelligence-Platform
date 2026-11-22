@@ -51,6 +51,10 @@ The web client should not persist bearer access tokens in localStorage or sessio
 
 Protected requests check session revocation as well as JWT signature and expiry. This adds a database read to protected requests, intentionally favoring immediate revocation over fully stateless access-token validation.
 
+## Verification
+
+The CI workflow starts a MongoDB 8.0 service and runs integration coverage for account registration, stored password hashing, authenticated identity retrieval, refresh rotation, immediate old-session invalidation, logout revocation, refresh-token reuse family revocation, and per-user session listing/revocation. Unit tests cover password hashing and access/refresh token primitives. This verification does not replace an external security review.
+
 ## Deferred controls
 
 The following remain future work: email verification, password reset and recovery, MFA, SSO/OIDC, suspicious-login notifications, device trust, tenant memberships, organization roles, and independent penetration testing. Do not interpret the current foundation as a complete production identity governance system.
