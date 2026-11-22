@@ -24,7 +24,7 @@ const cookieOptions = {
 const registerSchema = z.object({
   displayName: z.string().trim().min(2).max(100),
   email: z.string().trim().email().max(254),
-  password: z.string().min(12).max(72),
+  password: z.string().min(12).max(72).refine((value) => Buffer.byteLength(value, 'utf8') <= 72, 'Password must not exceed 72 UTF-8 bytes.'),
 }).strict();
 
 const loginSchema = z.object({
