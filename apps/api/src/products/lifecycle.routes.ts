@@ -85,19 +85,36 @@ router.get('/passport', async (request, response, next) => {
   try {
     const { organizationId, productId } = ids(request);
     const product = await scopedProduct(request.auth!.userId, organizationId, productId, 'products:read');
+    // Export only passport fields. Never serialize raw Mongoose documents: they may
+    // gain internal fields (tenant metadata, user references, or operational data).
     const [components, materials, events] = await Promise.all([
-      ComponentModel.find({ organizationId, productId }).sort({ code: 1 }).lean().exec(),
-      MaterialModel.find({ organizationId, productId }).sort({ name: 1 }).lean().exec(),
-      LifecycleEventModel.find({ organizationId, productId }).sort({ occurredAt: 1, _id: 1 }).lean().exec(),
+      ComponentModel.find({ organizationId, productId })
+        .select('_id code name description quantity unit')
+        .sort({ code: 1 }).lean().exec(),
+      MaterialModel.find({ organizationId, productId })
+        .select('_id componentId name category mass massUnit recycledContentPct originCountryCode')
+        .sort({ name: 1 }).lean().exec(),
+      LifecycleEventModel.find({ organizationId, productId })
+        .select('_id eventType occurredAt condition notes recoveredMass massUnit evidenceReference')
+        .sort({ occurredAt: 1, _id: 1 }).lean().exec(),
     ]);
+    const passportProduct = {
+      id: product._id,
+      sku: product.sku,
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      status: product.status,
+    };
     response.setHeader('content-type', 'application/json; charset=utf-8');
-    response.setHeader('content-disposition', `attachment; filename="product-passport-${product.sku}.json"`);
+    response.setHeader('content-disposition', `attachment; filename="product-passport-${String(product.sku).replace(/[^A-Z0-9_-]/gi, '_')}.json"`);
+    response.setHeader('cache-control', 'private, no-store');
     response.json({
       passportSchema: 'circutrace.product-passport.v1',
       generatedAt: new Date().toISOString(),
       dataClassification: 'organization-confidential',
       verification: { status: 'self-reported', note: 'This export packages organization-recorded data; it is not independently certified or cryptographically verified.' },
-      product, components, materials, lifecycleEvents: events,
+      product: passportProduct, components, materials, lifecycleEvents: events,
     });
   } catch (error) { next(error); }
 });
