@@ -7,7 +7,7 @@ import { createPartnerRelationship, listPartnerRelationships, updatePartnerRelat
 
 const router: ExpressRouter = Router({ mergeParams: true });
 router.use(authenticate);
-const objectId = /^[a-f\\d]{24}$/i;
+const objectId = /^[a-f\d]{24}$/i;
 function organization(organizationParam?: string) {
   const organizationId = organizationParam ?? '';
   if (!objectId.test(organizationId)) throw new AuthError('ORGANIZATION_NOT_FOUND', 'The organization was not found.', 404);
