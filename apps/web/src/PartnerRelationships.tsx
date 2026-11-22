@@ -100,7 +100,6 @@ export function PartnerRelationships({ organizationId, partners, canManage }: {
   }
 
   const activePartners = partners.filter((partner) => partner.status === 'active');
-  const partnerName = (id: string) => partners.find((partner) => partner._id === id)?.name || '';
 
   return <section className="partner-relationships" aria-labelledby="partner-relationships-title">
     <div className="relationship-heading">
@@ -125,8 +124,8 @@ export function PartnerRelationships({ organizationId, partners, canManage }: {
     </div>
     {loading ? <div className="relationship-empty" role="status">Loading partner relationships…</div> : relationships.length === 0 ? <div className="relationship-empty"><strong>No relationships found</strong><span>{filterPartner || filterType || filterStatus === 'inactive' ? 'Try changing your filters.' : 'Create the first connection between two active partners.'}</span></div> :
       <div className="relationship-list">{relationships.map((relationship) => {
-        const source = typeof relationship.sourcePartnerId === 'string' ? partnerName(relationship.sourcePartnerId) : relationship.sourcePartnerId.name;
-        const target = typeof relationship.targetPartnerId === 'string' ? partnerName(relationship.targetPartnerId) : relationship.targetPartnerId.name;
+        const source = relationship.sourcePartnerId.name;
+        const target = relationship.targetPartnerId.name;
         return <article className="relationship-card" key={relationship._id}>
           <div className="relationship-flow"><span className="relationship-node">{source || 'Partner'}</span><span className="relationship-arrow" aria-hidden="true">→</span><span className="relationship-node">{target || 'Partner'}</span></div>
           <div className="relationship-meta"><span className="relationship-kind">{relationshipTypes.find((item) => item.value === relationship.type)?.label || relationship.type}</span><span className={'partner-status ' + (relationship.status === 'active' ? 'status-active' : 'status-archived')}>{relationship.status}</span></div>
