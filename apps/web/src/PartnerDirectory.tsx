@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   ApiClientError, createPartner, createPartnerInvitation, listPartnerInvitations, revokePartnerInvitation, listPartners, updatePartner, updatePartnerStatus,
-  type Partner, type PartnerInput, type PartnerStatus, type PartnerType,
+  type Partner, type PartnerInput, type PartnerInvitation, type PartnerStatus, type PartnerType,
 } from './lib/api';
 
 const partnerTypes: { value: PartnerType; label: string }[] = [
@@ -40,7 +40,7 @@ export function PartnerDirectory({ organizationId, canManage }: { organizationId
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [externalReference, setExternalReference] = useState('');
-  const [invitations, setInvitations] = useState<import('./lib/api').PartnerInvitation[]>([]);
+  const [invitations, setInvitations] = useState<PartnerInvitation[]>([]);
   const [invitationBusy, setInvitationBusy] = useState(false);
   const [invitationToken, setInvitationToken] = useState('');
   const [invitationMessage, setInvitationMessage] = useState('');
