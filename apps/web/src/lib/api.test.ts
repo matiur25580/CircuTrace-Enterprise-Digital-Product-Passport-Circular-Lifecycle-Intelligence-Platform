@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAccessToken, listOrganizations, login, logout, refreshSession, setAccessToken } from './api';
-import type { ApiClientError } from './api';
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
@@ -38,6 +37,6 @@ describe('CircuTrace browser API client', () => {
   });
   it('converts API error envelopes to typed errors', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ error: { code: 'INVALID_CREDENTIALS', message: 'Email or password is incorrect.' } }, 401));
-    await expect(login('bad@example.com', 'bad')).rejects.toMatchObject<ApiClientError>({ code: 'INVALID_CREDENTIALS', status: 401 });
+    await expect(login('bad@example.com', 'bad')).rejects.toMatchObject({ code: 'INVALID_CREDENTIALS', status: 401 });
   });
 });
