@@ -15,14 +15,14 @@ function toAuthUser(user: {
   displayName: string;
   email: string;
   emailVerified: boolean;
-  createdAt: Date;
+  createdAt?: Date;
 }): AuthUser {
   return {
     id: user._id.toString(),
     displayName: user.displayName,
     email: user.email,
     emailVerified: user.emailVerified,
-    createdAt: user.createdAt.toISOString(),
+    createdAt: user.createdAt?.toISOString() ?? new Date().toISOString(),
   };
 }
 
