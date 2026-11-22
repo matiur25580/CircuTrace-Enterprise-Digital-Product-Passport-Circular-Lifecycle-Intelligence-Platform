@@ -7,7 +7,7 @@ CircuTrace is an enterprise platform concept for managing trusted product inform
 
 It is being developed as a production-oriented **MERN** application with a modular architecture, evidence-backed data, tenant isolation, and auditable workflows.
 
-> **Project status:** Architecture and repository foundation. Product capabilities described here are planned; they are not yet implemented or certified.
+> **Project status:** Architecture and initial MERN application foundation are in place. The web and API applications are scaffolds; business capabilities are still planned and are not yet implemented or certified.
 
 ## Why CircuTrace
 
@@ -80,6 +80,10 @@ docs/
   security/
   development/
 ```
+
+## Application foundation
+
+The initial workspace scaffold is available on the `feat/milestone-2-mern-foundation` branch. It contains the React/Vite web shell, Express API health endpoints, shared TypeScript and validation packages, pnpm/Turborepo workspace tooling, local MongoDB Compose configuration, and a GitHub Actions verification workflow. This is an early development scaffold; hosted CI and local install/build results must be verified before treating it as release-ready. See [local development setup](docs/development/local-setup.md).
 
 ## Documentation
 
