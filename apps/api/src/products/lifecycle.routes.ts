@@ -1,4 +1,5 @@
 import { Router, type Router as ExpressRouter } from 'express';
+import mongoose from 'mongoose';
 import { z } from 'zod';
 import { AuthError } from '../auth/auth-error.js';
 import { authenticate } from '../auth/auth.middleware.js';
@@ -7,6 +8,8 @@ import { ProductModel } from './product.model.js';
 import { ComponentModel } from './component.model.js';
 import { MaterialModel } from './material.model.js';
 import { LifecycleEventModel, LIFECYCLE_EVENT_TYPES } from './lifecycle-event.model.js';
+import { PassportEvidenceModel, EVIDENCE_CLAIM_TYPES } from './passport-evidence.model.js';
+import { hashEvidenceRecord, verifyEvidenceChain, type EvidenceHashInput } from './passport-evidence.js';
 
 const router: ExpressRouter = Router({ mergeParams: true });
 router.use(authenticate);
@@ -19,6 +22,15 @@ const eventSchema = z.object({
   recoveredMass: z.number().min(0).max(1_000_000_000).default(0),
   massUnit: z.enum(['g', 'kg']).default('kg'),
   evidenceReference: z.string().trim().max(500).nullable().optional(),
+}).strict();
+const evidenceSchema = z.object({
+  lifecycleEventId: z.string().regex(objectId).nullable().optional(),
+  claimType: z.enum(EVIDENCE_CLAIM_TYPES),
+  claimDescription: z.string().trim().min(5).max(1000),
+  evidenceUri: z.string().url().max(1000),
+  evidenceSha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
+  issuer: z.string().trim().min(2).max(200),
+  issuedAt: z.string().datetime(),
 }).strict();
 function ids(request: { params: Record<string, string | undefined> }) {
   const organizationId = request.params.organizationId ?? '';
@@ -52,6 +64,105 @@ router.post('/events', async (request, response, next) => {
       recordedBy: request.auth!.userId,
     });
     response.status(201).json({ data: { event } });
+  } catch (error) { next(error); }
+});
+router.post('/evidence', async (request, response, next) => {
+  const session = await mongoose.startSession();
+  try {
+    const { organizationId, productId } = ids(request);
+    await scopedProduct(request.auth!.userId, organizationId, productId, 'products:manage');
+    const parsed = evidenceSchema.safeParse(request.body);
+    if (!parsed.success) throw new AuthError('VALIDATION_ERROR', parsed.error.issues.map((issue) => issue.message).join('; '), 400);
+    if (parsed.data.lifecycleEventId) {
+      const eventExists = await LifecycleEventModel.exists({
+        _id: parsed.data.lifecycleEventId, organizationId, productId
+      });
+      if (!eventExists) throw new AuthError('LIFECYCLE_EVENT_NOT_FOUND', 'The lifecycle event was not found.', 404);
+    }
+    let created: InstanceType<typeof PassportEvidenceModel> | undefined;
+    await session.withTransaction(async () => {
+      const product = await ProductModel.findOne({ _id: productId, organizationId }).session(session).lean().exec();
+      if (!product) throw new AuthError('PRODUCT_NOT_FOUND', 'The product was not found.', 404);
+      const sequence = (product.evidenceSequence ?? 0) + 1;
+      const previousRecordHash = product.latestEvidenceHash ?? null;
+      const input: EvidenceHashInput = {
+        organizationId, productId,
+        lifecycleEventId: parsed.data.lifecycleEventId ?? null,
+        sequence,
+        claimType: parsed.data.claimType,
+        claimDescription: parsed.data.claimDescription,
+        evidenceUri: parsed.data.evidenceUri,
+        evidenceSha256: parsed.data.evidenceSha256.toLowerCase(),
+        issuer: parsed.data.issuer,
+        issuedAt: new Date(parsed.data.issuedAt).toISOString(),
+        recordedBy: request.auth!.userId,
+        previousRecordHash
+      };
+      const recordHash = hashEvidenceRecord(input);
+      const updated = await ProductModel.findOneAndUpdate({
+        _id: productId, organizationId,
+        evidenceSequence: product.evidenceSequence ?? 0,
+        latestEvidenceHash: product.latestEvidenceHash ?? null
+      }, {
+        $set: { evidenceSequence: sequence, latestEvidenceHash: recordHash }
+      }, { new: true, session }).exec();
+      if (!updated) throw new AuthError('EVIDENCE_CONFLICT', 'The evidence ledger changed concurrently. Retry the request.', 409);
+      const records = await PassportEvidenceModel.create([{
+        ...input,
+        issuedAt: new Date(input.issuedAt),
+        recordedBy: request.auth!.userId,
+        recordHash,
+        verificationStatus: 'digest_recorded_unverified'
+      }], { session });
+      created = records[0];
+    });
+    response.status(201).json({ data: { evidence: created, verification: {
+      status: 'digest_recorded_unverified',
+      note: 'The evidence metadata and supplied SHA-256 digest are recorded in the tamper-evident ledger. The referenced file bytes and issuer signature have not been independently verified.'
+    } } });
+  } catch (error) { next(error); }
+  finally { await session.endSession(); }
+});
+router.get('/evidence', async (request, response, next) => {
+  try {
+    const { organizationId, productId } = ids(request);
+    await scopedProduct(request.auth!.userId, organizationId, productId, 'products:read');
+    const evidence = await PassportEvidenceModel.find({ organizationId, productId })
+      .select('lifecycleEventId sequence claimType claimDescription evidenceUri evidenceSha256 issuer issuedAt previousRecordHash recordHash verificationStatus createdAt')
+      .sort({ sequence: 1 }).limit(1000).lean().exec();
+    response.json({ data: { evidence } });
+  } catch (error) { next(error); }
+});
+router.get('/evidence/verify', async (request, response, next) => {
+  try {
+    const { organizationId, productId } = ids(request);
+    await scopedProduct(request.auth!.userId, organizationId, productId, 'products:read');
+    const records = await PassportEvidenceModel.find({ organizationId, productId })
+      .sort({ sequence: 1 }).limit(1001).lean().exec();
+    const truncated = records.length > 1000;
+    const checked = records.slice(0, 1000).map((record) => ({
+      organizationId: String(record.organizationId),
+      productId: String(record.productId),
+      lifecycleEventId: record.lifecycleEventId ? String(record.lifecycleEventId) : null,
+      sequence: record.sequence,
+      claimType: record.claimType,
+      claimDescription: record.claimDescription,
+      evidenceUri: record.evidenceUri,
+      evidenceSha256: record.evidenceSha256,
+      issuer: record.issuer,
+      issuedAt: record.issuedAt.toISOString(),
+      recordedBy: String(record.recordedBy),
+      previousRecordHash: record.previousRecordHash ?? null,
+      recordHash: record.recordHash
+    }));
+    const verification = verifyEvidenceChain(checked);
+    response.json({ data: { verification: {
+      ...verification,
+      valid: verification.valid && !truncated,
+      truncated,
+      scope: 'ledger_integrity_only',
+      note: 'This check verifies sequence continuity and server-generated record hashes. It does not verify external file bytes, issuer identity, certificates, or digital signatures.'
+    } } });
   } catch (error) { next(error); }
 });
 router.get('/circularity', async (request, response, next) => {
