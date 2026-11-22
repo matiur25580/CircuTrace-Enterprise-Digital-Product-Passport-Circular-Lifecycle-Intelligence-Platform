@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { acceptPartnerInvitation, createPartner, createPartnerInvitation, getAccessToken, listOrganizations, listPartnerInvitations, listPartners, login, logout, refreshSession, revokePartnerInvitation, setAccessToken, updatePartner } from './api';
+import { acceptPartnerInvitation, createPartner, createPartnerInvitation, createPartnerRelationship, getAccessToken, listOrganizations, listPartnerInvitations, listPartnerRelationships, listPartners, login, logout, refreshSession, revokePartnerInvitation, setAccessToken, updatePartner, updatePartnerRelationshipStatus } from './api';
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
@@ -95,6 +95,34 @@ describe('partner directory API', () => {
     expect(result.accepted).toBe(true);
     expect(String(fetchMock.mock.calls[0][0])).toContain('/partner-invitations/accept');
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ token: 'one-time-token' }) });
+  });
+
+  it('lists partner relationships with organization scope and optional filters', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ data: { relationships: [{ _id: 'r1', type: 'supplies_to', status: 'active' }] } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const items = await listPartnerRelationships('org/one', { partnerId: 'p1', type: 'supplies_to', status: 'active' });
+    expect(items).toHaveLength(1);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/organizations/org%2Fone/partner-relationships?');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('partnerId=p1');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('type=supplies_to');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('status=active');
+  });
+  it('creates a directed partner relationship with a JSON request', async () => {
+    const payload = { sourcePartnerId: 'p1', targetPartnerId: 'p2', type: 'supplies_to' as const, description: 'Raw material supply' };
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ data: { relationship: { _id: 'r1', ...payload, status: 'active' } } }, 201));
+    vi.stubGlobal('fetch', fetchMock);
+    const relationship = await createPartnerRelationship('org1', payload);
+    expect(relationship._id).toBe('r1');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/organizations/org1/partner-relationships');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify(payload) });
+  });
+  it('updates partner relationship status through the scoped status endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ data: { relationship: { _id: 'r1', status: 'inactive' } } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const relationship = await updatePartnerRelationshipStatus('org1', 'r1', 'inactive');
+    expect(relationship.status).toBe('inactive');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/organizations/org1/partner-relationships/r1/status');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ status: 'inactive' }) });
   });
 
 });
