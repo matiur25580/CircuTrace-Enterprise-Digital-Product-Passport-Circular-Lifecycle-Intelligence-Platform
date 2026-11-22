@@ -133,4 +133,53 @@ describe('partner network tenant boundaries (MongoDB integration)', () => {
     const accepted = await request(app).post('/api/v1/partner-invitations/accept').set('Authorization', `Bearer ${contact}`).send({ token: created.body.data.token });
     expect(accepted.status).toBe(400);
   });
+
+  it('creates directed partner relationships and enforces tenant, role, and endpoint integrity', async () => {
+    const owner = await register('relationship-owner@example.com');
+    const member = await register('relationship-member@example.com');
+    const outsider = await register('relationship-outsider@example.com');
+    const organization = await request(app).post('/api/v1/organizations').set('Authorization', `Bearer ${owner}`).send({ name: 'Relationship Tenant' });
+    const orgId = organization.body.data.organization._id as string;
+    const invite = await request(app).post(`/api/v1/organizations/${orgId}/invitations`).set('Authorization', `Bearer ${owner}`).send({ email: 'relationship-member@example.com', role: 'member' });
+    await request(app).post('/api/v1/organizations/invitations/accept').set('Authorization', `Bearer ${member}`).send({ token: invite.body.data.token });
+    const supplier = await request(app).post(`/api/v1/organizations/${orgId}/partners`).set('Authorization', `Bearer ${owner}`).send({ name: 'Relationship Supplier', type: 'supplier' });
+    const manufacturer = await request(app).post(`/api/v1/organizations/${orgId}/partners`).set('Authorization', `Bearer ${owner}`).send({ name: 'Relationship Manufacturer', type: 'manufacturer' });
+    const supplierId = supplier.body.data.partner._id as string;
+    const manufacturerId = manufacturer.body.data.partner._id as string;
+    const path = `/api/v1/organizations/${orgId}/partner-relationships`;
+    const payload = { sourcePartnerId: supplierId, targetPartnerId: manufacturerId, type: 'supplies_to', description: 'Provides recycled polymer feedstock' };
+    const created = await request(app).post(path).set('Authorization', `Bearer ${owner}`).send(payload);
+    expect(created.status).toBe(201);
+    expect(created.body.data.relationship.type).toBe('supplies_to');
+    const duplicate = await request(app).post(path).set('Authorization', `Bearer ${owner}`).send(payload);
+    expect(duplicate.status).toBe(409);
+    const selfLink = await request(app).post(path).set('Authorization', `Bearer ${owner}`).send({ ...payload, targetPartnerId: supplierId });
+    expect(selfLink.status).toBe(400);
+    const memberRead = await request(app).get(path).set('Authorization', `Bearer ${member}`);
+    expect(memberRead.body.data.relationships).toHaveLength(1);
+    const memberWrite = await request(app).post(path).set('Authorization', `Bearer ${member}`).send({ ...payload, type: 'transports_for' });
+    expect(memberWrite.status).toBe(403);
+    const outsiderRead = await request(app).get(path).set('Authorization', `Bearer ${outsider}`);
+    expect(outsiderRead.status).toBe(404);
+    const archived = await request(app).patch(`${path}/${created.body.data.relationship._id}/status`).set('Authorization', `Bearer ${owner}`).send({ status: 'inactive' });
+    expect(archived.status).toBe(200);
+    const activeOnly = await request(app).get(`${path}?status=active`).set('Authorization', `Bearer ${owner}`);
+    expect(activeOnly.body.data.relationships).toHaveLength(0);
+  });
+
+  it('rejects relationships whose endpoint belongs to another organization', async () => {
+    const ownerA = await register('relationship-owner-a@example.com');
+    const ownerB = await register('relationship-owner-b@example.com');
+    const orgA = await request(app).post('/api/v1/organizations').set('Authorization', `Bearer ${ownerA}`).send({ name: 'Relationship Tenant A' });
+    const orgB = await request(app).post('/api/v1/organizations').set('Authorization', `Bearer ${ownerB}`).send({ name: 'Relationship Tenant B' });
+    const idA = orgA.body.data.organization._id as string;
+    const idB = orgB.body.data.organization._id as string;
+    const local = await request(app).post(`/api/v1/organizations/${idA}/partners`).set('Authorization', `Bearer ${ownerA}`).send({ name: 'Local Supplier', type: 'supplier' });
+    const foreign = await request(app).post(`/api/v1/organizations/${idB}/partners`).set('Authorization', `Bearer ${ownerB}`).send({ name: 'Foreign Manufacturer', type: 'manufacturer' });
+    const result = await request(app).post(`/api/v1/organizations/${idA}/partner-relationships`).set('Authorization', `Bearer ${ownerA}`).send({
+      sourcePartnerId: local.body.data.partner._id, targetPartnerId: foreign.body.data.partner._id, type: 'supplies_to',
+    });
+    expect(result.status).toBe(404);
+    expect(await PartnerRelationshipModel.countDocuments({ organizationId: idA })).toBe(0);
+  });
 });
