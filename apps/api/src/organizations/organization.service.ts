@@ -91,7 +91,7 @@ export async function changeMemberRole(actorId: string, organizationId: string, 
   if (actor.role !== 'owner' && role === 'owner') throw new AuthError('FORBIDDEN', 'Only an owner can assign the owner role.', 403);
   const target = await MembershipModel.findOne({ _id: membershipId, organizationId, status: 'active' }).exec();
   if (!target) throw new AuthError('MEMBERSHIP_NOT_FOUND', 'The membership was not found.', 404);
-  if (target.role === 'owner' && actor.role !== 'owner') throw new AuthError('FORBIDDEN', 'Only an owner can change the owner membership.', 403);
+  if (target.role === 'owner') throw new AuthError('OWNER_MEMBERSHIP_PROTECTED', 'Ownership transfer must be completed through the dedicated ownership workflow.', 409);
   target.role = role;
   await target.save();
   return target.toObject();
