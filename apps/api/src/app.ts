@@ -92,7 +92,7 @@ app.use((error: unknown, _request: express.Request, response: express.Response, 
     return;
   }
 
-  console.error('Unhandled API error', error);
+  console.error('Unhandled API error', error instanceof Error ? { name: error.name } : { type: typeof error });
   response.status(500).json({
     error: { code: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred.' },
   });
