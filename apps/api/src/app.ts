@@ -76,7 +76,8 @@ app.use((_request, response) => {
   });
 });
 
-app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
+app.use((error: unknown, _request: express.Request, response: express.Response, next: express.NextFunction) => {
+  void next;
   if (error instanceof AuthError) {
     response.status(error.statusCode).json({
       error: { code: error.code, message: error.message },
