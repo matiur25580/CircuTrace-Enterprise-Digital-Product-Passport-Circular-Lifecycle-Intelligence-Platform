@@ -126,6 +126,8 @@ router.get('/sessions', authenticate, async (request, response) => {
 
 router.delete('/sessions/:sessionId', authenticate, async (request, response) => {
   if (!request.auth) throw new AuthError('AUTHENTICATION_REQUIRED', 'A valid access token is required.');
+  const sessionIdParam = sessionId;
+  const sessionId = typeof sessionIdParam === 'string' ? sessionIdParam : sessionIdParam?.[0];
   if (!/^[a-f\d]{24}$/i.test(request.params.sessionId)) {
     throw new AuthError('INVALID_SESSION_ID', 'The session identifier is invalid.', 400);
   }
