@@ -14,7 +14,7 @@ describe('CircuTrace authenticated workspace shell', () => {
     expect(html).toContain('Welcome back.');
     expect(html).toContain('Sign in securely');
     expect(html).toContain('type="email"');
-    expect(html).toContain('autocomplete="current-password"');
+    expect(html).toContain('type="password"');
     expect(html).toContain('Create account');
     expect(html).toContain('Refresh sessions are held in an HttpOnly cookie');
   });
