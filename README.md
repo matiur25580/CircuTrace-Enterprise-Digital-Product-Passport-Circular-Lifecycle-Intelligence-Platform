@@ -107,3 +107,11 @@ CircuTrace is intended to support evidence management and operational workflows.
 ## License
 
 No open-source license has been applied yet. All rights are reserved unless a license is added by the repository owner.
+
+
+## Security and contribution guidance
+
+- [Security policy](SECURITY.md) — responsible vulnerability reporting and project security expectations.
+- [Contributing guide](CONTRIBUTING.md) — engineering standards and pull request expectations.
+
+These documents describe intended safeguards and contribution practices; they do not imply that planned product controls are already implemented or independently verified.
