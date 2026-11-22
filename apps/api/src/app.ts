@@ -4,7 +4,6 @@ import mongoose from 'mongoose';
 import type { HealthResponse } from '@circutrace/shared-types';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
-import pinoHttp from 'pino-http';
 import { env } from './config/env.js';
 
 export const app = express();
@@ -13,7 +12,20 @@ app.disable('x-powered-by');
 app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
-app.use(pinoHttp({ redact: ['req.headers.authorization', 'req.headers.cookie'] }));
+app.use((request, response, next) => {
+  const startedAt = Date.now();
+  response.on('finish', () => {
+    console.info(JSON.stringify({
+      level: 'info',
+      event: 'http_request',
+      method: request.method,
+      path: request.path,
+      statusCode: response.statusCode,
+      durationMs: Date.now() - startedAt,
+    }));
+  });
+  next();
+});
 app.use(
   '/api',
   rateLimit({
