@@ -7,7 +7,7 @@ CircuTrace is an enterprise platform concept for managing trusted product inform
 
 It is being developed as a production-oriented **MERN** application with a modular architecture, evidence-backed data, tenant isolation, and auditable workflows.
 
-> **Project status:** Architecture and repository foundation. Product capabilities described here are planned; they are not yet implemented or certified.
+> **Project status:** Architecture and initial MERN application foundation are in place. The web and API applications are scaffolds; business capabilities are still planned and are not yet implemented or certified.
 
 ## Why CircuTrace
 
