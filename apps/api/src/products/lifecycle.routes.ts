@@ -198,7 +198,7 @@ router.get('/passport', async (request, response, next) => {
     const product = await scopedProduct(request.auth!.userId, organizationId, productId, 'products:read');
     // Export only passport fields. Never serialize raw Mongoose documents: they may
     // gain internal fields (tenant metadata, user references, or operational data).
-    const [components, materials, events] = await Promise.all([
+    const [components, materials, events, evidenceRecords] = await Promise.all([
       ComponentModel.find({ organizationId, productId })
         .select('_id code name description quantity unit')
         .sort({ code: 1 }).lean().exec(),
@@ -208,7 +208,25 @@ router.get('/passport', async (request, response, next) => {
       LifecycleEventModel.find({ organizationId, productId })
         .select('_id eventType occurredAt condition notes recoveredMass massUnit evidenceReference')
         .sort({ occurredAt: 1, _id: 1 }).lean().exec(),
+      PassportEvidenceModel.find({ organizationId, productId })
+        .select('lifecycleEventId sequence claimType claimDescription evidenceUri evidenceSha256 issuer issuedAt previousRecordHash recordHash verificationStatus createdAt recordedBy')
+        .sort({ sequence: 1 }).limit(1000).lean().exec(),
     ]);
+    const evidenceVerification = verifyEvidenceChain(evidenceRecords.map((record) => ({
+      organizationId: String(record.organizationId),
+      productId: String(record.productId),
+      lifecycleEventId: record.lifecycleEventId ? String(record.lifecycleEventId) : null,
+      sequence: record.sequence,
+      claimType: record.claimType,
+      claimDescription: record.claimDescription,
+      evidenceUri: record.evidenceUri,
+      evidenceSha256: record.evidenceSha256,
+      issuer: record.issuer,
+      issuedAt: record.issuedAt.toISOString(),
+      recordedBy: String(record.recordedBy),
+      previousRecordHash: record.previousRecordHash ?? null,
+      recordHash: record.recordHash
+    })));
     const passportProduct = {
       id: product._id,
       sku: product.sku,
@@ -226,6 +244,24 @@ router.get('/passport', async (request, response, next) => {
       dataClassification: 'organization-confidential',
       verification: { status: 'self-reported', note: 'This export packages organization-recorded data; it is not independently certified or cryptographically verified.' },
       product: passportProduct, components, materials, lifecycleEvents: events,
+      evidence: evidenceRecords.map((record) => ({
+        sequence: record.sequence,
+        lifecycleEventId: record.lifecycleEventId,
+        claimType: record.claimType,
+        claimDescription: record.claimDescription,
+        evidenceUri: record.evidenceUri,
+        evidenceSha256: record.evidenceSha256,
+        issuer: record.issuer,
+        issuedAt: record.issuedAt,
+        previousRecordHash: record.previousRecordHash,
+        recordHash: record.recordHash,
+        verificationStatus: record.verificationStatus
+      })),
+      evidenceLedger: {
+        ...evidenceVerification,
+        scope: 'ledger_integrity_only',
+        note: 'Record hashes protect ledger metadata integrity. Referenced file bytes, issuer identity, and signatures are not independently verified.'
+      },
     });
   } catch (error) { next(error); }
 });
