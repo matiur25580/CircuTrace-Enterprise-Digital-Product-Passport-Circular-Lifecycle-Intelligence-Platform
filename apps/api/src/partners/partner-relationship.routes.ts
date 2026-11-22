@@ -8,8 +8,8 @@ import { createPartnerRelationship, listPartnerRelationships, updatePartnerRelat
 const router: ExpressRouter = Router({ mergeParams: true });
 router.use(authenticate);
 const objectId = /^[a-f\\d]{24}$/i;
-function organization(request: { params: { organizationId?: string } }) {
-  const organizationId = request.params.organizationId ?? '';
+function organization(organizationParam?: string) {
+  const organizationId = organizationParam ?? '';
   if (!objectId.test(organizationId)) throw new AuthError('ORGANIZATION_NOT_FOUND', 'The organization was not found.', 404);
   return organizationId;
 }
@@ -38,15 +38,15 @@ router.get('/', async (request, response) => {
     type: z.enum(PARTNER_RELATIONSHIP_TYPES).optional(),
     status: z.enum(PARTNER_RELATIONSHIP_STATUSES).optional(),
   }).strict(), request.query);
-  response.json({ data: { relationships: await listPartnerRelationships(actor(request), organization(request), filters) } });
+  response.json({ data: { relationships: await listPartnerRelationships(actor(request), organization((request.params as { organizationId?: string }).organizationId), filters) } });
 });
 router.post('/', async (request, response) => {
-  const relationship = await createPartnerRelationship(actor(request), organization(request), parse(createSchema, request.body));
+  const relationship = await createPartnerRelationship(actor(request), organization((request.params as { organizationId?: string }).organizationId), parse(createSchema, request.body));
   response.status(201).json({ data: { relationship } });
 });
 router.patch('/:relationshipId/status', async (request, response) => {
   const { status } = parse(statusSchema, request.body);
-  response.json({ data: { relationship: await updatePartnerRelationshipStatus(actor(request), organization(request), request.params.relationshipId ?? '', status) } });
+  response.json({ data: { relationship: await updatePartnerRelationshipStatus(actor(request), organization((request.params as { organizationId?: string }).organizationId), request.params.relationshipId ?? '', status) } });
 });
 
 export { router as partnerRelationshipRouter };
