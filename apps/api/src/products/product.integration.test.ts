@@ -69,7 +69,6 @@ describe('product and material registry (MongoDB integration)', () => {
     const badProduct = await request(app).post(path).set('Authorization', `Bearer ${token}`).send({ sku: 'BAD-1', name: 'Bad Product', unexpected: true });
     expect(badProduct.status).toBe(400);
   });
-});
 
   it('creates and lists product variants with GTIN checksum validation and scoped uniqueness', async () => {
     const token = await register('catalog-variants@example.com');
@@ -88,3 +87,5 @@ describe('product and material registry (MongoDB integration)', () => {
     const badGtin = await request(app).post(path).set('Authorization', 'Bearer ' + token).send({ sku: 'VAR-BAD', gtin: '4006381333932' });
     expect(badGtin.status).toBe(400);
   });
+
+});
