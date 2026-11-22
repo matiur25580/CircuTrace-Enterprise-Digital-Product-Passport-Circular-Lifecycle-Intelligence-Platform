@@ -1,6 +1,14 @@
 import { Schema, model } from 'mongoose';
 
-const userSchema = new Schema(
+interface UserRecord {
+  displayName: string;
+  email: string;
+  passwordHash: string;
+  emailVerified: boolean;
+  status: 'active' | 'suspended';
+}
+
+const userSchema = new Schema<UserRecord>(
   {
     displayName: { type: String, required: true, trim: true, minlength: 2, maxlength: 100 },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, maxlength: 254 },
@@ -8,16 +16,7 @@ const userSchema = new Schema(
     emailVerified: { type: Boolean, required: true, default: false },
     status: { type: String, enum: ['active', 'suspended'], required: true, default: 'active' },
   },
-  {
-    timestamps: true,
-    toJSON: {
-      transform(_document, returned) {
-        delete returned.passwordHash;
-        delete returned.__v;
-        return returned;
-      },
-    },
-  },
+  { timestamps: true },
 );
 
-export const UserModel = model('User', userSchema);
+export const UserModel = model<UserRecord>('User', userSchema);
