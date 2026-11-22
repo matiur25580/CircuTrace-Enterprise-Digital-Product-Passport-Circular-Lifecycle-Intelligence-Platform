@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type Router as ExpressRouter } from 'express';
 import { z } from 'zod';
 import { env } from '../config/env.js';
 import { AuthError } from './auth-error.js';
@@ -12,7 +12,7 @@ import {
   rotateRefreshToken,
 } from './auth.service.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 router.use((request, _response, next) => {
   const origin = request.get('origin');
