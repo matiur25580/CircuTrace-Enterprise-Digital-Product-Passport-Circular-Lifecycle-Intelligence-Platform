@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiClientError, getAccessToken, listOrganizations, login, logout, refreshSession, setAccessToken } from './api';
+import { getAccessToken, listOrganizations, login, logout, refreshSession, setAccessToken } from './api';
+import type { ApiClientError } from './api';
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
