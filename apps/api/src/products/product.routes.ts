@@ -47,25 +47,25 @@ router.get('/', async (req, res) => {
   res.json({ data: { products: await listProducts(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), filters) } });
 });
 router.post('/', async (req, res) => {
-  res.status(201).json({ data: { product: await createProduct(actor(req), organizationId(req), parse(productSchema, req.body)) } });
+  res.status(201).json({ data: { product: await createProduct(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), parse(productSchema, req.body)) } });
 });
 router.get('/:productId', async (req, res) => {
-  res.json({ data: { product: await getProduct(actor(req), organizationId(req), req.params.productId ?? '') } });
+  res.json({ data: { product: await getProduct(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '') } });
 });
 router.patch('/:productId', async (req, res) => {
-  res.json({ data: { product: await updateProduct(actor(req), organizationId(req), req.params.productId ?? '', parse(updateSchema, req.body)) } });
+  res.json({ data: { product: await updateProduct(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '', parse(updateSchema, req.body)) } });
 });
 router.get('/:productId/components', async (req, res) => {
-  res.json({ data: { components: await listComponents(actor(req), organizationId(req), req.params.productId ?? '') } });
+  res.json({ data: { components: await listComponents(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '') } });
 });
 router.post('/:productId/components', async (req, res) => {
-  res.status(201).json({ data: { component: await createComponent(actor(req), organizationId(req), req.params.productId ?? '', parse(componentSchema, req.body)) } });
+  res.status(201).json({ data: { component: await createComponent(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '', parse(componentSchema, req.body)) } });
 });
 router.get('/:productId/components/:componentId/materials', async (req, res) => {
-  res.json({ data: { materials: await listMaterials(actor(req), organizationId(req), req.params.productId ?? '', req.params.componentId ?? '') } });
+  res.json({ data: { materials: await listMaterials(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '', req.params.componentId ?? '') } });
 });
 router.post('/:productId/components/:componentId/materials', async (req, res) => {
-  res.status(201).json({ data: { material: await createMaterial(actor(req), organizationId(req), req.params.productId ?? '', req.params.componentId ?? '', parse(materialSchema, req.body)) } });
+  res.status(201).json({ data: { material: await createMaterial(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '', req.params.componentId ?? '', parse(materialSchema, req.body)) } });
 });
 
 export { router as productRouter };
