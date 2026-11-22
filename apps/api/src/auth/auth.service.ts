@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Types } from 'mongoose';
+import type { Types } from 'mongoose';
 import { env } from '../config/env.js';
 import { SessionModel } from '../models/session.model.js';
 import { UserModel } from '../models/user.model.js';
