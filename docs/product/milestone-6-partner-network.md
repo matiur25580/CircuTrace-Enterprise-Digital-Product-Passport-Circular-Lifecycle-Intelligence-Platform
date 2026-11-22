@@ -29,7 +29,12 @@ List filters: `type`, `status`, and `search`. Results are sorted by name and cap
 - External partner invitation delivery and acceptance.
 - Partner-side accounts, cross-organization federation, and delegated access.
 - Partner relationship graph, supplier scorecards, certifications, risk, and compliance evidence.
-- Frontend partner directory and detail workflows.
+- Partner detail editing, external partner invitations, relationship graph, scorecards and immutable audit events.
 - Immutable audit-event persistence and advanced pagination.
 
 No email is sent and no external organization is automatically granted access by creating a partner record.
+
+
+## Frontend integration
+
+The authenticated workspace now includes an organization-scoped partner directory with live API search, owner/admin partner creation, status management, loading and empty states, and permission-aware controls. Partner records are always loaded using the currently selected organization; the API independently verifies membership and tenant ownership. The dashboard does not synthesize partner metrics or sample partner records.

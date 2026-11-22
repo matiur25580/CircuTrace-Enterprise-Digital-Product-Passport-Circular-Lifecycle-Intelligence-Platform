@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
-  ApiClientError, createOrganization, listOrganizations, login, logout, refreshSession, register,
-  type AuthUser, type Organization,
+  ApiClientError, createOrganization, createPartner, listOrganizations, listPartners, login, logout, refreshSession, register, updatePartnerStatus,
+  type AuthUser, type Organization, type Partner, type PartnerType, type PartnerStatus,
 } from './lib/api';
 
 const navigation = [
@@ -67,6 +67,15 @@ export default function App() {
   const [showCreateOrganization, setShowCreateOrganization] = useState(false);
   const [organizationBusy, setOrganizationBusy] = useState(false);
   const [workspaceError, setWorkspaceError] = useState('');
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [partnersLoading, setPartnersLoading] = useState(false);
+  const [partnersError, setPartnersError] = useState('');
+  const [partnerSearch, setPartnerSearch] = useState('');
+  const [partnerName, setPartnerName] = useState('');
+  const [partnerType, setPartnerType] = useState<PartnerType>('supplier');
+  const [partnerReference, setPartnerReference] = useState('');
+  const [partnerCountry, setPartnerCountry] = useState('');
+  const [partnerBusy, setPartnerBusy] = useState(false);
   const [query, setQuery] = useState('');
   const [activeSection, setActiveSection] = useState('overview');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -96,6 +105,31 @@ export default function App() {
     });
     return () => { mounted = false; };
   }, []);
+  useEffect(() => {
+    if (!selectedOrganizationId) { setPartners([]); return; }
+    let mounted = true;
+    setPartnersLoading(true); setPartnersError('');
+    void listPartners(selectedOrganizationId, partnerSearch).then((items) => { if (mounted) setPartners(items); })
+      .catch((error: unknown) => { if (mounted) setPartnersError(errorMessage(error)); })
+      .finally(() => { if (mounted) setPartnersLoading(false); });
+    return () => { mounted = false; };
+  }, [selectedOrganizationId, partnerSearch]);
+  async function handleCreatePartner(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (!selectedOrganizationId) return;
+    setPartnerBusy(true); setPartnersError('');
+    try {
+      await createPartner(selectedOrganizationId, { name: partnerName, type: partnerType, ...(partnerReference.trim() ? { externalReference: partnerReference.trim() } : {}), ...(partnerCountry.trim() ? { countryCode: partnerCountry.trim().toUpperCase() } : {}) });
+      setPartnerName(''); setPartnerReference(''); setPartnerCountry('');
+      setPartners(await listPartners(selectedOrganizationId, partnerSearch));
+    } catch (error) { setPartnersError(errorMessage(error)); }
+    finally { setPartnerBusy(false); }
+  }
+  async function handlePartnerStatus(partnerId: string, status: PartnerStatus) {
+    if (!selectedOrganizationId) return;
+    setPartnersError('');
+    try { const updated = await updatePartnerStatus(selectedOrganizationId, partnerId, status); setPartners((current) => current.map((item) => item._id === updated._id ? updated : item)); }
+    catch (error) { setPartnersError(errorMessage(error)); }
+  }
   function handleAuthenticated(nextUser: AuthUser) {
     setUser(nextUser); setWorkspaceError('');
     void loadOrganizations().then(() => setAuthStatus('authenticated')).catch((error: unknown) => { setWorkspaceError(errorMessage(error)); setAuthStatus('authenticated'); });
@@ -148,7 +182,21 @@ export default function App() {
           {showCreateOrganization && <form className="create-organization-inline" onSubmit={handleCreateOrganization}><label htmlFor="new-organization-name">Organization name</label><input id="new-organization-name" value={organizationName} onChange={(event) => setOrganizationName(event.target.value)} minLength={2} maxLength={160} required placeholder="Organization name" /><button className="primary-button" type="submit" disabled={organizationBusy}>{organizationBusy ? 'Creating…' : 'Create organization'}</button></form>}
           <section className="metric-section" aria-labelledby="metrics-title"><div className="section-title-row"><div><p className="eyebrow">WORKSPACE CAPABILITIES</p><h2 id="metrics-title">Operational snapshot</h2></div><span className="data-state">Domain data integration pending</span></div><div className="metric-grid">{metrics.map((metric) => <article className="metric-card" key={metric.label}><div className="metric-top"><span>{metric.label}</span><span className="metric-icon" aria-hidden="true">{metric.icon}</span></div><p className="metric-value">—</p><p className="metric-note">{metric.note}</p></article>)}</div></section>
           <div className="dashboard-grid"><section className="panel lifecycle-panel" id="lifecycle" aria-labelledby="lifecycle-title"><div className="panel-heading"><div><p className="eyebrow">END-TO-END TRACEABILITY</p><h2 id="lifecycle-title">Product lifecycle</h2></div><span className="panel-tag">PLATFORM MODEL</span></div><p className="panel-description">A connected product record follows materials and components through every stage of its useful life.</p><ol className="lifecycle-list">{stages.map((stage, index) => <li className="lifecycle-stage" key={stage.label}><span className="stage-number">{String(index + 1).padStart(2, '0')}</span><span className="stage-copy"><strong>{stage.label}</strong><small>{stage.detail}</small></span></li>)}</ol></section><section className="panel activity-panel" id="products" aria-labelledby="activity-title"><div className="panel-heading"><div><p className="eyebrow">YOUR AUDIT TRAIL</p><h2 id="activity-title">Recent activity</h2></div><span className="activity-count">NOT CONNECTED</span></div><div className="empty-state"><span className="empty-state-icon" aria-hidden="true">◷</span><h3>Activity feed is the next integration</h3><p>Product, partner, and lifecycle events will appear after their domain APIs are implemented.</p></div></section></div>
-          <section className="lower-grid" aria-label="Platform areas"><article className="area-card" id="partners"><span className="area-icon" aria-hidden="true">◎</span><div><h3>Partner network</h3><p>Build trusted connections across your supply chain.</p></div><span className="area-state">PLANNED</span></article><article className="area-card" id="evidence"><span className="area-icon" aria-hidden="true">▧</span><div><h3>Evidence vault</h3><p>Keep certificates and provenance evidence connected.</p></div><span className="area-state">PLANNED</span></article><article className="area-card" id="compliance"><span className="area-icon" aria-hidden="true">◇</span><div><h3>Compliance workspace</h3><p>Review claims and supporting documentation.</p></div><span className="area-state">PLANNED</span></article><article className="area-card" id="settings"><span className="area-icon" aria-hidden="true">⚙</span><div><h3>Organization settings</h3><p>Manage workspace access and configuration.</p></div><span className="area-state">API AVAILABLE</span></article></section>
+          <section className="lower-grid" aria-label="Platform areas"><section className="panel partner-directory" id="partners" aria-labelledby="partners-title">
+            <div className="panel-heading"><div><p className="eyebrow">SUPPLY CHAIN RELATIONSHIPS</p><h2 id="partners-title">Partner network</h2></div><span className="panel-tag">{partners.length} RECORDS</span></div>
+            <p className="panel-description">Manage suppliers, manufacturers, brands, logistics providers and circularity partners for the active organization.</p>
+            {partnersError && <div className="inline-alert" role="alert">{partnersError}<button type="button" onClick={() => setPartnersError('')} aria-label="Dismiss partner error">×</button></div>}
+            <div className="partner-toolbar"><label htmlFor="partner-search">Search partners<input id="partner-search" type="search" placeholder="Search by partner name" value={partnerSearch} onChange={(event) => setPartnerSearch(event.target.value)} /></label><span>{partnersLoading ? 'Loading…' : `${partners.length} matching partner${partners.length === 1 ? '' : 's'}`}</span></div>
+            {selectedOrganization && (selectedOrganization.role === 'owner' || selectedOrganization.role === 'admin') && <form className="partner-create-form" onSubmit={handleCreatePartner}>
+              <h3>Add a partner</h3><label>Partner name<input value={partnerName} onChange={(event) => setPartnerName(event.target.value)} minLength={2} maxLength={160} required placeholder="e.g. Northstar Materials" /></label>
+              <label>Partner type<select value={partnerType} onChange={(event) => setPartnerType(event.target.value as PartnerType)}><option value="supplier">Supplier</option><option value="manufacturer">Manufacturer</option><option value="brand">Brand</option><option value="logistics">Logistics</option><option value="service_provider">Service provider</option><option value="recycler">Recycler</option><option value="other">Other</option></select></label>
+              <label>External reference <span className="optional-label">(optional)</span><input value={partnerReference} onChange={(event) => setPartnerReference(event.target.value)} maxLength={120} placeholder="ERP or supplier code" /></label>
+              <label>Country code <span className="optional-label">(optional)</span><input value={partnerCountry} onChange={(event) => setPartnerCountry(event.target.value)} minLength={2} maxLength={2} pattern="[A-Za-z]{2}" placeholder="IN" /></label>
+              <button className="primary-button" type="submit" disabled={partnerBusy}>{partnerBusy ? 'Saving…' : 'Add partner'}</button>
+            </form>}
+            {partnersLoading ? <div className="partner-empty">Loading organization partners…</div> : partners.length === 0 ? <div className="partner-empty"><strong>No partners found</strong><span>{partnerSearch ? 'Try a different search term.' : 'Add your first supplier or supply-chain partner to get started.'}</span></div> : <div className="partner-list">{partners.map((partner) => <article className="partner-row" key={partner._id}><span className="partner-avatar" aria-hidden="true">{partner.name.slice(0,1).toUpperCase()}</span><div className="partner-main"><strong>{partner.name}</strong><span>{partner.type.replaceAll('_', ' ')}{partner.countryCode ? ` · ${partner.countryCode}` : ''}{partner.externalReference ? ` · ${partner.externalReference}` : ''}</span></div><span className={'partner-status status-' + partner.status}>{partner.status}</span>{selectedOrganization && (selectedOrganization.role === 'owner' || selectedOrganization.role === 'admin') && <label className="partner-status-control"><span className="sr-only">Change status for {partner.name}</span><select aria-label={`Status for ${partner.name}`} value={partner.status} onChange={(event) => void handlePartnerStatus(partner._id, event.target.value as PartnerStatus)}><option value="active">Active</option><option value="suspended">Suspended</option><option value="archived">Archived</option></select></label>}</article>)}</div>}
+            <p className="partner-permission-note">Access is enforced by the API for the active organization. Members and viewers can read; owners and admins can manage records.</p>
+          </section><article className="area-card" id="evidence"><span className="area-icon" aria-hidden="true">▧</span><div><h3>Evidence vault</h3><p>Keep certificates and provenance evidence connected.</p></div><span className="area-state">PLANNED</span></article><article className="area-card" id="compliance"><span className="area-icon" aria-hidden="true">◇</span><div><h3>Compliance workspace</h3><p>Review claims and supporting documentation.</p></div><span className="area-state">PLANNED</span></article><article className="area-card" id="settings"><span className="area-icon" aria-hidden="true">⚙</span><div><h3>Organization settings</h3><p>Manage workspace access and configuration.</p></div><span className="area-state">API AVAILABLE</span></article></section>
           <footer className="dashboard-footer"><span>CircuTrace · Digital Product Passport & Circular Lifecycle Intelligence</span><span>Authenticated workspace · No fabricated operational metrics</span></footer>
         </main>
       </div>

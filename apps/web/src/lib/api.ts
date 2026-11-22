@@ -9,6 +9,9 @@ export interface AuthUser {
   emailVerified: boolean;
   createdAt: string;
 }
+export type PartnerType = 'supplier' | 'manufacturer' | 'brand' | 'logistics' | 'service_provider' | 'recycler' | 'other';
+export type PartnerStatus = 'active' | 'suspended' | 'archived';
+export interface Partner { _id: string; name: string; legalName?: string | null; type: PartnerType; status: PartnerStatus; website?: string | null; countryCode?: string | null; externalReference?: string | null; notes?: string | null; contact?: { name?: string | null; email?: string | null; role?: string | null }; createdAt: string; updatedAt: string; }
 export interface Organization {
   _id: string;
   name: string;
@@ -97,4 +100,20 @@ export async function listOrganizations(): Promise<Organization[]> {
 export async function createOrganization(input: { name: string; slug?: string }): Promise<Organization> {
   const result = await request<{ organization: Organization; role: 'owner' }>('/organizations', { method: 'POST', body: JSON.stringify(input) });
   return { ...result.organization, role: result.role };
+}
+
+export async function listPartners(organizationId: string, search = ''): Promise<Partner[]> {
+  const params = new URLSearchParams();
+  if (search.trim()) params.set('search', search.trim());
+  const suffix = params.size ? `?${params.toString()}` : '';
+  const result = await request<{ partners: Partner[] }>(`/organizations/${encodeURIComponent(organizationId)}/partners${suffix}`);
+  return result.partners;
+}
+export async function createPartner(organizationId: string, input: { name: string; type: PartnerType; externalReference?: string; countryCode?: string }): Promise<Partner> {
+  const result = await request<{ partner: Partner }>(`/organizations/${encodeURIComponent(organizationId)}/partners`, { method: 'POST', body: JSON.stringify(input) });
+  return result.partner;
+}
+export async function updatePartnerStatus(organizationId: string, partnerId: string, status: PartnerStatus): Promise<Partner> {
+  const result = await request<{ partner: Partner }>(`/organizations/${encodeURIComponent(organizationId)}/partners/${encodeURIComponent(partnerId)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+  return result.partner;
 }
