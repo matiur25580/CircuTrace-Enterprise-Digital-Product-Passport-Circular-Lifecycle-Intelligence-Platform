@@ -12,6 +12,7 @@ import { organizationRouter } from './organizations/organization.routes.js';
 import { partnerRouter } from './partners/partner.routes.js';
 import { partnerInvitationAcceptanceRouter, partnerInvitationRouter } from './partners/partner-invitation.routes.js';
 import { productRouter } from './products/product.routes.js';
+import { lifecycleRouter } from './products/lifecycle.routes.js';
 
 export const app: Express = express();
 
@@ -75,6 +76,7 @@ app.use('/api/v1/organizations/:organizationId/partners/:partnerId/invitations',
 app.use('/api/v1/partner-invitations', partnerInvitationAcceptanceRouter);
 app.use('/api/v1/organizations/:organizationId/partners', partnerRouter);
 app.use('/api/v1/organizations/:organizationId/products', productRouter);
+app.use('/api/v1/organizations/:organizationId/products/:productId/lifecycle', lifecycleRouter);
 
 app.use((_request, response) => {
   response.status(404).json({
