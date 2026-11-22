@@ -1,5 +1,7 @@
 import cors from 'cors';
 import express from 'express';
+import mongoose from 'mongoose';
+import type { HealthResponse } from '@circutrace/shared-types';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
@@ -23,17 +25,19 @@ app.use(
 );
 
 app.get('/api/v1/health', (_request, response) => {
-  response.status(200).json({
-    data: {
-      status: 'ok',
-      service: 'circutrace-api',
-      timestamp: new Date().toISOString(),
-    },
-  });
+  const health: HealthResponse = {
+    status: 'ok',
+    service: 'circutrace-api',
+    timestamp: new Date().toISOString(),
+  };
+  response.status(200).json({ data: health });
 });
 
 app.get('/api/v1/ready', (_request, response) => {
-  response.status(200).json({ data: { status: 'ready' } });
+  const databaseConnected = mongoose.connection.readyState === 1;
+  response.status(databaseConnected ? 200 : 503).json({
+    data: { status: databaseConnected ? 'ready' : 'not_ready' },
+  });
 });
 
 app.use((_request, response) => {
