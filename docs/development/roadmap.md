@@ -23,6 +23,11 @@ Milestones are gated by working code, automated verification, and documentation 
 | 17. Integration platform | API clients, webhooks, imports and exports | Auth, retry, replay and idempotency tests |
 | 18. Production hardening | Security, accessibility, performance, observability, backup/restore, deployment | Reproducible CI and operational readiness review |
 
+## Current milestone notes
+
+- **Milestone 1:** Architecture and documentation foundation committed to `main`.
+- **Milestone 2:** Workspace and application scaffold committed on `feat/milestone-2-mern-foundation`. Local dependency installation and the first hosted CI run remain to be verified; this milestone is not yet declared complete.
+
 ## Delivery rules
 
 - Keep pull requests focused and reviewable.
