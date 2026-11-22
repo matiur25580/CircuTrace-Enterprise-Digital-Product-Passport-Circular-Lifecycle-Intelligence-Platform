@@ -27,7 +27,7 @@ const evidenceSchema = z.object({
   lifecycleEventId: z.string().regex(objectId).nullable().optional(),
   claimType: z.enum(EVIDENCE_CLAIM_TYPES),
   claimDescription: z.string().trim().min(5).max(1000),
-  evidenceUri: z.string().url().max(1000),
+  evidenceUri: z.string().url().max(1000).refine((value) => value.startsWith('https://'), 'Evidence URI must use HTTPS.'),
   evidenceSha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
   issuer: z.string().trim().min(2).max(200),
   issuedAt: z.string().datetime(),
@@ -36,7 +36,7 @@ function ids(request: { params: Record<string, string | undefined> }) {
   const organizationId = request.params.organizationId ?? '';
   const productId = request.params.productId ?? '';
   if (!objectId.test(organizationId) || !objectId.test(productId)) throw new AuthError('PRODUCT_NOT_FOUND', 'The product was not found.', 404);
-  return { organizationId, productId };
+  return { organizationId: organizationId.toLowerCase(), productId: productId.toLowerCase() };
 }
 async function scopedProduct(userId: string, organizationId: string, productId: string, permission: 'products:read' | 'products:manage') {
   await requirePermission(userId, organizationId, permission);
@@ -87,7 +87,7 @@ router.post('/evidence', async (request, response, next) => {
       const previousRecordHash = product.latestEvidenceHash ?? null;
       const input: EvidenceHashInput = {
         organizationId, productId,
-        lifecycleEventId: parsed.data.lifecycleEventId ?? null,
+        lifecycleEventId: parsed.data.lifecycleEventId?.toLowerCase() ?? null,
         sequence,
         claimType: parsed.data.claimType,
         claimDescription: parsed.data.claimDescription,
@@ -95,7 +95,7 @@ router.post('/evidence', async (request, response, next) => {
         evidenceSha256: parsed.data.evidenceSha256.toLowerCase(),
         issuer: parsed.data.issuer,
         issuedAt: new Date(parsed.data.issuedAt).toISOString(),
-        recordedBy: request.auth!.userId,
+        recordedBy: request.auth!.userId.toLowerCase(),
         previousRecordHash
       };
       const recordHash = hashEvidenceRecord(input);
@@ -110,7 +110,7 @@ router.post('/evidence', async (request, response, next) => {
       const records = await PassportEvidenceModel.create([{
         ...input,
         issuedAt: new Date(input.issuedAt),
-        recordedBy: request.auth!.userId,
+        recordedBy: request.auth!.userId.toLowerCase(),
         recordHash,
         verificationStatus: 'digest_recorded_unverified'
       }], { session });
@@ -129,8 +129,8 @@ router.get('/evidence', async (request, response, next) => {
     await scopedProduct(request.auth!.userId, organizationId, productId, 'products:read');
     const evidence = await PassportEvidenceModel.find({ organizationId, productId })
       .select('lifecycleEventId sequence claimType claimDescription evidenceUri evidenceSha256 issuer issuedAt previousRecordHash recordHash verificationStatus createdAt')
-      .sort({ sequence: 1 }).limit(1000).lean().exec();
-    response.json({ data: { evidence } });
+      .sort({ sequence: 1 }).limit(1001).lean().exec();
+    response.json({ data: { evidence: evidence.slice(0, 1000), meta: { truncated: evidence.length > 1000, returned: Math.min(evidence.length, 1000) } } });
   } catch (error) { next(error); }
 });
 router.get('/evidence/verify', async (request, response, next) => {
@@ -245,7 +245,7 @@ router.get('/passport', async (request, response, next) => {
       dataClassification: 'organization-confidential',
       verification: { status: 'self-reported', note: 'This export packages organization-recorded data; it is not independently certified or cryptographically verified.' },
       product: passportProduct, components, materials, lifecycleEvents: events,
-      evidence: evidenceRecords.map((record) => ({
+      evidence: evidenceRecords.slice(0, 1000).map((record) => ({
         sequence: record.sequence,
         lifecycleEventId: record.lifecycleEventId,
         claimType: record.claimType,
