@@ -45,7 +45,7 @@ const variantSchema = z.object({
   sku: z.string().trim().min(2).max(80),
   gtin: z.string().trim().refine(validGtin, 'GTIN must have a valid length and check digit.').nullable().optional(),
   name: z.string().trim().max(160).nullable().optional(),
-  attributes: z.record(z.string().trim().min(1).max(80)).refine((value) => Object.keys(value).length <= 30, 'A variant can have at most 30 attributes.').optional(),
+  attributes: z.record(z.string(), z.string().trim().min(1).max(80)).refine((value) => Object.keys(value).length <= 30, 'A variant can have at most 30 attributes.').optional(),
 }).strict();
 const materialSchema = z.object({
   name: z.string().trim().min(2).max(160), category: z.enum(MATERIAL_CATEGORIES),
