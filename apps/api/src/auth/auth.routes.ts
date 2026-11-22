@@ -126,12 +126,12 @@ router.get('/sessions', authenticate, async (request, response) => {
 
 router.delete('/sessions/:sessionId', authenticate, async (request, response) => {
   if (!request.auth) throw new AuthError('AUTHENTICATION_REQUIRED', 'A valid access token is required.');
-  const sessionIdParam = sessionId;
+  const sessionIdParam = request.params.sessionId;
   const sessionId = typeof sessionIdParam === 'string' ? sessionIdParam : sessionIdParam?.[0];
-  if (!/^[a-f\d]{24}$/i.test(request.params.sessionId)) {
+  if (!sessionId || !/^[a-f\\d]{24}$/i.test(sessionId)) {
     throw new AuthError('INVALID_SESSION_ID', 'The session identifier is invalid.', 400);
   }
-  const revoked = await revokeUserSession(request.auth.userId, request.params.sessionId);
+  const revoked = await revokeUserSession(request.auth.userId, sessionId);
   if (!revoked) throw new AuthError('SESSION_NOT_FOUND', 'The session was not found or is already revoked.', 404);
   response.status(204).send();
 });
