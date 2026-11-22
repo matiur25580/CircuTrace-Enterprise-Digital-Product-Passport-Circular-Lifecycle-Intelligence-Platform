@@ -4,7 +4,7 @@ import { requirePermission } from '../organizations/organization.service.js';
 import { PartnerModel } from '../partners/partner.model.js';
 import { ProductModel } from './product.model.js';
 import { ComponentModel } from './component.model.js';
-import { MaterialModel, MATERIAL_CATEGORIES } from './material.model.js';
+import { MaterialModel, type MATERIAL_CATEGORIES } from './material.model.js';
 
 type ProductInput = { sku: string; name: string; description?: string | null; category?: string | null; brandPartnerId?: string | null };
 function invalidId(value: string) { return !Types.ObjectId.isValid(value); }
