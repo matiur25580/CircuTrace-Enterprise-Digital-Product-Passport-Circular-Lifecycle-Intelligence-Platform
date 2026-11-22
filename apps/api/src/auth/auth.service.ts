@@ -57,15 +57,12 @@ export async function registerUser(
   if (existing) throw new AuthError('EMAIL_ALREADY_REGISTERED', 'An account with this email already exists.', 409);
 
   const passwordHash = await hashPassword(input.password);
-  let user;
-  try {
-    user = await UserModel.create({ displayName: input.displayName.trim(), email, passwordHash });
-  } catch (error) {
+  const user = await UserModel.create({ displayName: input.displayName.trim(), email, passwordHash }).catch((error: unknown) => {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
       throw new AuthError('EMAIL_ALREADY_REGISTERED', 'An account with this email already exists.', 409);
     }
     throw error;
-  }
+  });
 
   const tokens = await issueSession(user.id, metadata);
   return { ...tokens, user: toAuthUser(user) };
