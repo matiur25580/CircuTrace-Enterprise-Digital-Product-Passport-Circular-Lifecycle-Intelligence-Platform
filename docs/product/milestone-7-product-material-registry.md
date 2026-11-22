@@ -30,3 +30,10 @@ List endpoints are bounded to 100 products or 200 child records. No arbitrary or
 - Lifecycle events, digital product passport snapshots, claims and evidence.
 - BOM import/export, mass-balance validation, unit conversion, and composition reconciliation.
 - Frontend product catalogue screens and audit-event persistence.
+
+## Frontend delivery
+
+- Added an authenticated organization-scoped product catalogue with search, status filters, and loading, error, and empty states.
+- Owners and administrators can register products; members and viewers can browse.
+- Product detail view loads components and material composition and provides authorized forms to add component and material records.
+- All visible records are loaded from the API; the UI does not use fabricated catalogue data.
