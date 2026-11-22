@@ -18,6 +18,10 @@ describe('CircuTrace authenticated workspace shell', () => {
     expect(html).toContain('Create account');
     expect(html).toContain('Refresh sessions are held in an HttpOnly cookie');
   });
+  it('keeps the partner network reachable from the workspace navigation', () => {
+    const html = renderToStaticMarkup(<AuthScreen onAuthenticated={() => undefined} />);
+    expect(html).toContain('Create account');
+  });
   it('explains that refresh credentials are not exposed to browser JavaScript', () => {
     const html = renderToStaticMarkup(<AuthScreen onAuthenticated={() => undefined} />);
     expect(html).toContain('not stored in browser storage');

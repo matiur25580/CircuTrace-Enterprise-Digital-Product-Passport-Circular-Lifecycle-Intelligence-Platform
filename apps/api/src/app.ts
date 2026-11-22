@@ -9,6 +9,9 @@ import { env } from './config/env.js';
 import { AuthError } from './auth/auth-error.js';
 import { authRouter } from './auth/auth.routes.js';
 import { organizationRouter } from './organizations/organization.routes.js';
+import { partnerRouter } from './partners/partner.routes.js';
+import { partnerRelationshipRouter } from './partners/partner-relationship.routes.js';
+import { partnerInvitationAcceptanceRouter, partnerInvitationRouter } from './partners/partner-invitation.routes.js';
 
 export const app: Express = express();
 
@@ -67,7 +70,11 @@ app.get('/api/v1/ready', (_request, response) => {
 });
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/organizations/:organizationId/partner-relationships', partnerRelationshipRouter);
 app.use('/api/v1/organizations', organizationRouter);
+app.use('/api/v1/organizations/:organizationId/partners/:partnerId/invitations', partnerInvitationRouter);
+app.use('/api/v1/partner-invitations', partnerInvitationAcceptanceRouter);
+app.use('/api/v1/organizations/:organizationId/partners', partnerRouter);
 
 app.use((_request, response) => {
   response.status(404).json({
