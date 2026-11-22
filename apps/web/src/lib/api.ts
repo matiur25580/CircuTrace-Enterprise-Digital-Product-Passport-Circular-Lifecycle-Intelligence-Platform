@@ -1,0 +1,100 @@
+import type { ApiError } from '@circutrace/shared-types';
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1').replace(/\/$/, '');
+
+export interface AuthUser {
+  id: string;
+  displayName: string;
+  email: string;
+  emailVerified: boolean;
+  createdAt: string;
+}
+export interface Organization {
+  _id: string;
+  name: string;
+  slug: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer';
+}
+interface AuthPayload {
+  accessToken: string;
+  tokenType: 'Bearer';
+  expiresIn: number;
+  user: AuthUser;
+}
+interface ApiEnvelope<T> { data: T }
+export class ApiClientError extends Error {
+  constructor(message: string, readonly code: string, readonly status: number) {
+    super(message);
+    this.name = 'ApiClientError';
+  }
+}
+let accessToken: string | null = null;
+export function setAccessToken(token: string | null) { accessToken = token; }
+export function getAccessToken() { return accessToken; }
+
+async function parseResponse<T>(response: Response): Promise<T> {
+  if (response.status === 204) return undefined as T;
+  const payload = await response.json().catch(() => null) as ApiEnvelope<T> | ApiError | null;
+  if (!response.ok) {
+    const failure = payload && 'error' in payload ? payload.error : undefined;
+    throw new ApiClientError(failure?.message || 'The request could not be completed.', failure?.code || 'REQUEST_FAILED', response.status);
+  }
+  if (!payload || !('data' in payload)) throw new ApiClientError('The server returned an invalid response.', 'INVALID_RESPONSE', response.status);
+  return payload.data;
+}
+
+async function rawRequest<T>(path: string, init: RequestInit = {}, token: string | null = accessToken): Promise<T> {
+  const headers = new Headers(init.headers);
+  if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json');
+  if (token) headers.set('authorization', `Bearer ${token}`);
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers,
+    credentials: 'include',
+  });
+  return parseResponse<T>(response);
+}
+
+let refreshInFlight: Promise<AuthPayload> | null = null;
+export async function refreshSession(): Promise<AuthPayload> {
+  if (!refreshInFlight) {
+    refreshInFlight = rawRequest<AuthPayload>('/auth/refresh', { method: 'POST' }, null)
+      .then((payload) => { setAccessToken(payload.accessToken); return payload; })
+      .catch((error: unknown) => { setAccessToken(null); throw error; })
+      .finally(() => { refreshInFlight = null; });
+  }
+  return refreshInFlight;
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  try {
+    return await rawRequest<T>(path, init);
+  } catch (error) {
+    if (!(error instanceof ApiClientError) || error.status !== 401 || path === '/auth/refresh' || path === '/auth/login' || path === '/auth/register' || path === '/auth/logout') throw error;
+    const refreshed = await refreshSession();
+    return rawRequest<T>(path, init, refreshed.accessToken);
+  }
+}
+
+export async function login(email: string, password: string): Promise<AuthPayload> {
+  const result = await rawRequest<AuthPayload>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }, null);
+  setAccessToken(result.accessToken);
+  return result;
+}
+export async function register(displayName: string, email: string, password: string): Promise<AuthPayload> {
+  const result = await rawRequest<AuthPayload>('/auth/register', { method: 'POST', body: JSON.stringify({ displayName, email, password }) }, null);
+  setAccessToken(result.accessToken);
+  return result;
+}
+export async function logout(): Promise<void> {
+  try { await rawRequest<void>('/auth/logout', { method: 'POST' }, null); }
+  finally { setAccessToken(null); }
+}
+export async function listOrganizations(): Promise<Organization[]> {
+  const result = await request<{ organizations: Organization[] }>('/organizations');
+  return result.organizations;
+}
+export async function createOrganization(input: { name: string; slug?: string }): Promise<Organization> {
+  const result = await request<{ organization: Organization; role: 'owner' }>('/organizations', { method: 'POST', body: JSON.stringify(input) });
+  return { ...result.organization, role: result.role };
+}

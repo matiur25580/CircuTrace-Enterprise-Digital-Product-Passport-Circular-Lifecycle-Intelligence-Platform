@@ -9,7 +9,7 @@
     "preview": "vite preview --host 0.0.0.0",
     "lint": "eslint src",
     "typecheck": "tsc -b --pretty false",
-    "test": "node -e \"console.log('Web tests will be introduced with feature components')\"",
+    "test": "vitest run",
     "clean": "rimraf dist"
   },
   "dependencies": {
@@ -21,6 +21,7 @@
   "devDependencies": {
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
-    "vite": "^6.1.0"
+    "vite": "^6.1.0",
+    "vitest": "^3.0.5"
   }
 }
