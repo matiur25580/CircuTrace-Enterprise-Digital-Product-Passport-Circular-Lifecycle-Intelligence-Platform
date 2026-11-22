@@ -17,7 +17,7 @@ All endpoints are nested under:
 
 `claimType` is one of `recycled_content`, `recovered_output`, `material_composition`, `repair`, `origin`, or `other`. The submission includes a concise claim description, HTTPS evidence URI, SHA-256 digest of the referenced evidence file, issuer label, and issue timestamp. An optional lifecycle event ID must belong to the same organization and product.
 
-The API records the digest supplied by the submitter. It does not fetch the URI or inspect file bytes, so it cannot independently establish that the digest matches the referenced file. Issuer identity, certificate authority, and digital signatures are not validated.
+Evidence URIs must use HTTPS. The API records the digest supplied by the submitter. It does not fetch the URI or inspect file bytes, so it cannot independently establish that the digest matches the referenced file. Issuer identity, certificate authority, and digital signatures are not validated.
 
 ## Hash-chain design
 
@@ -30,7 +30,8 @@ The evidence write therefore requires MongoDB transaction support (replica-set o
 The verify endpoint checks:
 - contiguous sequence numbers starting at one;
 - predecessor-hash linkage;
-- each record's recomputed hash.
+- each record's recomputed hash;
+- the final sequence and hash against the product's separately stored ledger head, detecting deletion of trailing records as well as gaps in the middle.
 
 A valid result means the retrieved ledger metadata is internally consistent with its hash chain. It does **not** mean the external document exists, its bytes match the submitted digest, the issuer is authentic, or the sustainability claim is certified. All records retain `digest_recorded_unverified` status until a separate trusted file-ingestion and issuer-signature verification capability is implemented.
 
