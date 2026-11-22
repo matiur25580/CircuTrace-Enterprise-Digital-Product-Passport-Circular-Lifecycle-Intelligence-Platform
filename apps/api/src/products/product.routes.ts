@@ -38,7 +38,7 @@ function validGtin(value: string) {
   if (!/^(?:[0-9]{8}|[0-9]{12}|[0-9]{13}|[0-9]{14})$/.test(value)) return false;
   const digits = value.split('').map(Number);
   const check = digits.pop()!;
-  const sum = digits.reduce((total, digit, index) => total + digit * ((digits.length - index) % 2 === 0 ? 3 : 1), 0);
+  const sum = digits.reduce((total, digit, index) => total + digit * ((digits.length - index) % 2 === 1 ? 3 : 1), 0);
   return (10 - (sum % 10)) % 10 === check;
 }
 const variantSchema = z.object({
