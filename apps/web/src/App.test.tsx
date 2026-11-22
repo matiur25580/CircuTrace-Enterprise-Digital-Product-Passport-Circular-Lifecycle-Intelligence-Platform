@@ -1,27 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import App from './App';
+import App, { AuthScreen } from './App';
 
-describe('CircuTrace dashboard shell', () => {
-  it('renders the workspace dashboard and identifies the preview state', () => {
+describe('CircuTrace authenticated workspace shell', () => {
+  it('waits for secure session restoration before showing tenant data', () => {
     const html = renderToStaticMarkup(<App />);
-    expect(html).toContain('Good to see you.');
-    expect(html).toContain('FOUNDATION PREVIEW');
-    expect(html).toContain('Connect your organization to get started');
-    expect(html).toContain('No workspace connected');
+    expect(html).toContain('Restoring your secure session');
+    expect(html).not.toContain('Good to see you.');
+    expect(html).not.toContain('No organization');
   });
-  it('does not invent operational metrics before a workspace is connected', () => {
-    const html = renderToStaticMarkup(<App />);
-    expect(html).toContain('Awaiting workspace data');
-    expect(html).toContain('Supplier network not connected');
-    expect(html).toContain('No activity to show yet');
-    expect(html).not.toContain('1,284');
+  it('renders sign-in and account creation modes with accessible form controls', () => {
+    const html = renderToStaticMarkup(<AuthScreen onAuthenticated={() => undefined} />);
+    expect(html).toContain('Welcome back.');
+    expect(html).toContain('Sign in securely');
+    expect(html).toContain('type="email"');
+    expect(html).toContain('autocomplete="current-password"');
+    expect(html).toContain('Create account');
+    expect(html).toContain('Refresh sessions are held in an HttpOnly cookie');
   });
-  it('provides keyboard navigation landmarks and a skip link', () => {
-    const html = renderToStaticMarkup(<App />);
-    expect(html).toContain('Skip to content');
-    expect(html).toContain('aria-label="Workspace navigation"');
-    expect(html).toContain('aria-label="Primary"');
-    expect(html).toContain('id="navigation-search"');
+  it('explains that refresh credentials are not exposed to browser JavaScript', () => {
+    const html = renderToStaticMarkup(<AuthScreen onAuthenticated={() => undefined} />);
+    expect(html).toContain('not stored in browser storage');
   });
 });

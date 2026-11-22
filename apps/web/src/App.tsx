@@ -34,7 +34,7 @@ function errorMessage(error: unknown) {
 function Brand() {
   return <a className="brand" href="#overview" aria-label="CircuTrace dashboard home"><span className="brand-mark" aria-hidden="true">C</span><span>CircuTrace</span></a>;
 }
-function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: AuthUser) => void }) {
+export function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: AuthUser) => void }) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
