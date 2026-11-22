@@ -2,9 +2,8 @@ import type { NextFunction, Request, Response } from 'express';
 import { SessionModel } from '../models/session.model.js';
 import { UserModel } from '../models/user.model.js';
 import { AuthError } from './auth-error.js';
-import type { AuthContext } from './auth.types.js';
+import type { AuthContext, AuthUser } from './auth.types.js';
 import { verifyAccessToken } from './tokens.js';
-import { AuthUser } from './auth.types.js';
 
 function toAuthUser(user: {
   _id: { toString(): string };
