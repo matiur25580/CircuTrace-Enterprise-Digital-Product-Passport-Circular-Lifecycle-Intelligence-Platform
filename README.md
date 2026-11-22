@@ -67,73 +67,73 @@ These 12 views are **illustrative SVG dashboard concepts**, not screenshots capt
 
 ### 01. Circularity command center
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Circularity command center concept summarizing product volumes, lifecycle stage distribution, evidence coverage and recovery outcomes. All values are synthetic.
 
 ![CircuTrace Circularity command center](docs/assets/dashboard/01-circularity-command-center.svg)
 
 ### 02. Digital product passport
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Digital product passport concept presenting approved identity, composition, provenance, lifecycle summary and public disclosure status. All product data is synthetic.
 
 ![CircuTrace Digital product passport](docs/assets/dashboard/02-digital-product-passport.svg)
 
 ### 03. Product & material registry
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Product and material registry concept for SKUs, variants, components, material declarations and traceability completeness. All records are synthetic.
 
 ![CircuTrace Product & material registry](docs/assets/dashboard/03-product-material-registry.svg)
 
 ### 04. Supplier provenance network
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Supplier provenance network concept showing supplier relationships, origin declarations, evidence status and unresolved verification gaps. All organizations are illustrative.
 
 ![CircuTrace Supplier provenance network](docs/assets/dashboard/04-supplier-provenance-network.svg)
 
 ### 05. Lifecycle event ledger
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Lifecycle event ledger concept for manufacture, transfer, repair, refurbishment, reuse, recycling and disposal events with accountable timestamps. All events are synthetic.
 
 ![CircuTrace Lifecycle event ledger](docs/assets/dashboard/05-lifecycle-event-ledger.svg)
 
 ### 06. Evidence integrity explorer
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Evidence integrity explorer concept for document provenance, version history, attestations, review state and integrity checks. All evidence is illustrative.
 
 ![CircuTrace Evidence integrity explorer](docs/assets/dashboard/06-evidence-integrity-explorer.svg)
 
 ### 07. Repair & refurbishment
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Repair and refurbishment workspace concept tracking service history, replaced components, condition and next-life readiness. All product records are synthetic.
 
 ![CircuTrace Repair & refurbishment](docs/assets/dashboard/07-repair-refurbishment.svg)
 
 ### 08. Circularity performance
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Circularity performance view concept comparing reuse, repair, recovery and material-loop indicators with transparent calculation context. All metrics are synthetic.
 
 ![CircuTrace Circularity performance](docs/assets/dashboard/08-circularity-performance.svg)
 
 ### 09. Compliance & claim review
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Compliance and claim review workspace concept linking sustainability claims to supporting evidence, reviewers and decision states. It does not certify compliance.
 
 ![CircuTrace Compliance & claim review](docs/assets/dashboard/09-compliance-claim-review.svg)
 
 ### 10. Public passport verification
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Public passport verification concept showing only approved disclosure fields and a verifiable product identity summary. All example information is synthetic.
 
 ![CircuTrace Public passport verification](docs/assets/dashboard/10-public-passport-verification.svg)
 
 ### 11. Product recall & risk
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Product recall and risk workspace concept for affected batches, component relationships, risk signals and accountable response actions. All records are synthetic.
 
 ![CircuTrace Product recall & risk](docs/assets/dashboard/11-product-recall-risk.svg)
 
 ### 12. Circular partner ecosystem
 
-Illustrative product and circularity workflow view. Synthetic values demonstrate the proposed information hierarchy and do not represent live platform data.
+Circular partner ecosystem concept showing manufacturers, repairers, logistics providers and recyclers connected through controlled data exchange. All partners are illustrative.
 
 ![CircuTrace Circular partner ecosystem](docs/assets/dashboard/12-circular-partner-ecosystem.svg)
 
