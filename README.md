@@ -2,151 +2,141 @@
 
 **Enterprise Digital Product Passport & Circular Lifecycle Intelligence Platform**
 
-> Make product identity, material provenance and circular lifecycle evidence easier to verify across the value chain.
+> Make product identity, material provenance and circular lifecycle evidence easier to trace, verify and govern.
 
-CircuTrace is a MERN-oriented platform project connecting product identity, supplier data, bill-of-materials context, lifecycle events and evidence-backed passport information.
+## 1. Product vision
 
-## 1. Project status
+CircuTrace is an enterprise-oriented platform concept for managing product information across design, sourcing, manufacturing, distribution, use, repair, refurbishment, reuse and end-of-life recovery. It is designed around evidence-linked claims, persistent product identity and accountable collaboration between organizations.
 
-**Main branch: application foundation and architecture scaffold.** Product/material registry and lifecycle/passport capabilities are being developed in feature branches and should not be represented as released main-branch functionality until merged. No regulatory certification or live EU DPP Registry integration is claimed.
+## 2. Project status and responsible claims
 
-## 2. Why CircuTrace
+**Status: early MERN application foundation with business capabilities under active development.** Confirm implementation on the selected branch before describing a feature as delivered. Dashboard illustrations are design concepts, not screenshots of a running deployment.
 
-Product information is fragmented across manufacturers, suppliers, repairers, logistics providers and recyclers. CircuTrace is designed to connect persistent product identity, material provenance, supplier declarations, lifecycle events, repair/reuse/recovery workflows, approved public disclosures and data-quality signals.
+CircuTrace does not independently certify products, guarantee supplier declarations or establish legal compliance. Regulatory applicability and required evidence must be assessed by qualified domain and legal stakeholders.
 
-## 3. Product capability map
+## 3. Core product domains
 
-| Domain | Capability direction |
-| --- | --- |
-| Digital passport | Product identity, attributes, ownership and lifecycle summary |
-| Composition | BOM, components, material classifications and origin |
-| Supplier network | Partner onboarding, declarations and risk signals |
-| Traceability | Sourcing, production, custody and distribution events |
-| Evidence vault | Versioned documents, attestations and review states |
-| Compliance | Configurable requirements, control mapping and evidence gaps |
-| Circularity | Repair, refurbishment, reuse, resale and recovery |
-| Public verification | QR / Digital Link entry point with field-level disclosure |
-| Intelligence | Data completeness, provenance confidence and explainable indicators |
+- **Digital product passport:** product identity, attributes, ownership and approved disclosures.
+- **Bill of materials:** components, material declarations, origin and composition.
+- **Supplier network:** supplier onboarding, organization relationships and declarations.
+- **Lifecycle traceability:** sourcing, production, custody, distribution and service events.
+- **Evidence vault:** versioned documents, attestations, provenance and review state.
+- **Compliance workspace:** configurable requirements, controls, assessments and audit trails.
+- **Circularity workflows:** repair, maintenance, refurbishment, reuse, resale and recovery.
+- **Intelligence:** explainable data-quality, completeness and risk indicators.
+- **Integrations:** authenticated APIs, webhooks and enterprise data exchange.
 
-## 4. Technology and architecture
+## 4. Technology stack and architecture
 
-- **Web:** React, TypeScript, Vite and Tailwind CSS.
-- **API:** Node.js, Express and TypeScript.
-- **Data:** MongoDB and Mongoose.
-- **Client data:** TanStack Query; Zustand only where shared state is justified.
-- **Workspace:** pnpm/Turborepo modular monolith foundation.
-- **Async/realtime:** Redis, BullMQ and Socket.IO when workload needs justify them.
-- **Quality:** automated tests, static analysis and end-to-end coverage as milestones land.
+The project follows a **MERN-oriented TypeScript architecture**:
 
-Design principles: tenant isolation at API/data boundaries; claims bound to issuer/evidence/timestamp/review state; provenance-preserving lifecycle events; untrusted external data validation; public/restricted field separation; explainable circularity metrics; jurisdiction-aware product rules.
+- Web: React, TypeScript, Vite and Tailwind CSS.
+- API: Node.js, Express and TypeScript.
+- Data: MongoDB and Mongoose.
+- Client state and data fetching: TanStack Query; Zustand where shared local state is justified.
+- Quality: unit/integration tests, API tests, static analysis and browser E2E coverage as implemented.
+- Delivery: Docker and GitHub Actions.
 
-## 5. Local development
+The intended architecture is a modular monolith with explicit domain boundaries. Add asynchronous workers, queues or realtime infrastructure only when supported by a concrete workload and operational requirement.
 
-Prerequisites: Node.js LTS, pinned pnpm version, Docker and MongoDB.
+## 5. Architecture principles
 
-    pnpm install --frozen-lockfile
-    pnpm dev
-    pnpm typecheck
-    pnpm test
-    pnpm build
+1. Enforce tenant isolation in API services and data-access queries.
+2. Use deny-by-default authorization for protected records and actions.
+3. Link material, supplier and sustainability claims to evidence and provenance.
+4. Preserve lifecycle event history and attributable actors.
+5. Treat derived sustainability and risk scores as explainable indicators, not certifications.
+6. Validate and authenticate external integrations; bound retries and payload sizes.
+7. Design for data portability, auditability and privacy-aware retention.
 
-Use [local setup](docs/development/local-setup.md) and branch-specific scripts. Keep secrets in local environment files only.
+## 6. Repository structure
 
-## 6. Industry alignment: Digital Product Passport
+The workspace is organized around web and API applications, shared contracts/validation, infrastructure and documentation. Consult the checked-out branch for the exact current folder layout and package scripts.
 
-The EU Ecodesign for Sustainable Products Regulation (ESPR) establishes the legal basis for the Digital Product Passport, with product-specific requirements introduced progressively. Passport information may include origin, materials, repairability, environmental performance, reuse and recycling; certain battery categories are an early mandatory use case.
+## 7. Local development
 
-Product directions:
-- Product-group-specific data schemas and versioned disclosure rules.
-- QR / Digital Link resolution to a stable passport identifier.
-- Role-based access for public, business and authority-facing fields.
-- Evidence provenance, issuer verification and change history.
-- Battery lifecycle data readiness and restricted-access handling.
-- Exportable evidence packs and machine-readable APIs.
+1. Install the Node.js and package-manager versions specified by the workspace.
+2. Review application `.env.example` files and configure local MongoDB and other documented dependencies.
+3. Install dependencies using the committed lockfile.
+4. Start local infrastructure using the repository's documented Compose or setup instructions.
+5. Run the root and app-level scripts declared in `package.json`.
+6. Run type checking, tests and production builds before opening a pull request.
 
-Reference: [European Commission — Digital Product Passport](https://single-market-economy.ec.europa.eu/single-market/digital-product-passport_en). A passport data model alone does not establish legal compliance or registry connectivity.
+See [local setup](docs/development/local-setup.md) when present. Never commit secrets or real supplier/customer data.
 
-## 7. Security and responsible claims
+## 8. Security and quality strategy
 
-- Supplier declarations are not independently verified facts by default.
-- Do not label a product compliant without applicable legal assessment and evidence.
-- Protect trade secrets and personal data through field-level disclosure and access control.
-- Use synthetic supplier, product and lifecycle data in demos.
-- Production requires regulatory mapping, security review, partner controls, audit retention, backup/restore and independent verification.
+- Test tenant isolation and cross-organization access boundaries.
+- Validate evidence ownership, file type, size and integrity.
+- Track evidence freshness and claim review status.
+- Protect webhooks with authentication, replay protection and idempotency.
+- Scan dependencies and source code in CI; keep lockfiles reproducible.
+- Use synthetic product and supplier data in demos.
 
-## 8. Illustrative dashboard gallery
+## 9. Illustrative dashboard gallery
 
-These 12 SVGs are **illustrative dashboard concepts**, not screenshots of a deployed product. All figures, products, suppliers and evidence are synthetic. The gallery is presented in a single-column sequence.
+The following 12 SVGs are **illustrative dashboard concepts**, not captured application screenshots. Values and records are synthetic. They are intentionally presented in one vertical column.
 
-### 01. Product Passport Command Center
-Portfolio view of passport readiness, evidence coverage and lifecycle exceptions.
+### 01 — Digital product passport
+A product-level view of identity, ownership, composition and lifecycle summary.
+![CircuTrace digital product passport](docs/assets/dashboard/01-product-passport-overview.svg)
 
-![CircuTrace Product Passport Command Center](docs/assets/dashboard/01-product-passport-command-center.svg)
+### 02 — Bill of materials explorer
+A component hierarchy concept showing material declarations and provenance coverage.
+![CircuTrace bill of materials explorer](docs/assets/dashboard/02-bill-of-materials-explorer.svg)
 
-### 02. Product Identity Registry
-Persistent product identifiers, master-data completeness and identity validation.
+### 03 — Supplier network intelligence
+A supplier collaboration view for onboarding, risk signals and declaration status.
+![CircuTrace supplier network intelligence](docs/assets/dashboard/03-supplier-network-intelligence.svg)
 
-![CircuTrace Product Identity Registry](docs/assets/dashboard/02-product-identity-registry.svg)
+### 04 — Lifecycle traceability
+A chronological view of sourcing, manufacturing, custody and distribution events.
+![CircuTrace lifecycle traceability](docs/assets/dashboard/04-lifecycle-traceability.svg)
 
-### 03. Bill of Materials Explorer
-Component and material breakdown linked to supplier origin and change history.
+### 05 — Evidence vault
+A document governance concept for versioned certificates, declarations and review states.
+![CircuTrace evidence vault](docs/assets/dashboard/05-evidence-vault.svg)
 
-![CircuTrace Bill of Materials Explorer](docs/assets/dashboard/03-bill-of-materials-explorer.svg)
+### 06 — Compliance control center
+A workspace for configurable requirements, evidence mapping and assessment workflows.
+![CircuTrace compliance control center](docs/assets/dashboard/06-compliance-control-center.svg)
 
-### 04. Supplier Trust Network
-Supplier onboarding, declaration status and evidence freshness.
+### 07 — Circularity performance
+A view of repair, reuse, refurbishment and recovery indicators.
+![CircuTrace circularity performance](docs/assets/dashboard/07-circularity-performance.svg)
 
-![CircuTrace Supplier Trust Network](docs/assets/dashboard/04-supplier-trust-network.svg)
+### 08 — Product verification portal
+A consumer-facing concept for approved passport information and product verification.
+![CircuTrace product verification portal](docs/assets/dashboard/08-product-verification-portal.svg)
 
-### 05. Material Provenance Trace
-Chain of custody for material origin, transformation and provenance gaps.
+### 09 — Material provenance map
+A concept connecting material origin signals, suppliers and traceability evidence.
+![CircuTrace material provenance map](docs/assets/dashboard/09-material-provenance-map.svg)
 
-![CircuTrace Material Provenance Trace](docs/assets/dashboard/05-material-provenance-trace.svg)
+### 10 — Repair and refurbishment workspace
+A service workflow for repairs, replaced parts and next-life readiness.
+![CircuTrace repair and refurbishment workspace](docs/assets/dashboard/10-repair-refurbishment-workspace.svg)
 
-### 06. Lifecycle Event Timeline
-Accountable manufacture, distribution, repair and recovery events.
+### 11 — Passport data quality
+A quality monitor for completeness, freshness, evidence coverage and validation exceptions.
+![CircuTrace passport data quality](docs/assets/dashboard/11-data-quality-assurance.svg)
 
-![CircuTrace Lifecycle Event Timeline](docs/assets/dashboard/06-lifecycle-event-timeline.svg)
+### 12 — Claims and audit governance
+A view of sustainability claim evidence, approvals and accountable decisions.
+![CircuTrace claims and audit governance](docs/assets/dashboard/12-audit-and-claims-governance.svg)
 
-### 07. Evidence Vault
-Versioned evidence, attestations and review outcomes.
+## 10. Documentation and contribution
 
-![CircuTrace Evidence Vault](docs/assets/dashboard/07-evidence-vault.svg)
+Explore `docs/architecture`, `docs/api`, `docs/database`, `docs/security` and `docs/development` for the material available on the selected branch. Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting changes and use [SECURITY.md](SECURITY.md) for responsible vulnerability reporting.
 
-### 08. Compliance Readiness
-Requirement-to-evidence mapping, completeness and review planning.
+## 11. Roadmap themes
 
-![CircuTrace Compliance Readiness](docs/assets/dashboard/08-compliance-readiness.svg)
+- Mature product, component and material domain contracts.
+- Add evidence integrity, versioning and review workflows.
+- Expand supplier collaboration and tenant-boundary tests.
+- Introduce circular lifecycle workflows with auditable state transitions.
+- Improve accessibility, observability, data export and operational runbooks.
 
-### 09. Circularity Performance
-Repair, reuse, refurbishment and end-of-life recovery signals.
+## 12. License
 
-![CircuTrace Circularity Performance](docs/assets/dashboard/09-circularity-performance.svg)
-
-### 10. Battery Passport Workspace
-Battery composition, lifecycle history, data completeness and access controls.
-
-![CircuTrace Battery Passport Workspace](docs/assets/dashboard/10-battery-passport-workspace.svg)
-
-### 11. Public Passport Verification
-QR entry, approved disclosures and verification outcomes.
-
-![CircuTrace Public Passport Verification](docs/assets/dashboard/11-public-passport-verification.svg)
-
-### 12. Audit & Data Quality
-Evidence freshness, attributable changes and trust exceptions.
-
-![CircuTrace Audit & Data Quality](docs/assets/dashboard/12-audit-and-data-quality.svg)
-
-## 9. Roadmap
-
-1. Complete tenant-scoped product and material registry.
-2. Add append-only lifecycle events with provenance and idempotency.
-3. Introduce evidence versioning, issuer verification and expiry handling.
-4. Implement configurable product-group passport schemas and disclosure policy.
-5. Add GS1 Digital Link / QR resolution and interoperable export.
-6. Add data-quality rules, accessibility, security testing and operational runbooks.
-
-## 10. Contribution and license
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Unless a license file is added, all rights are reserved.
+No open-source license is applied unless a license file is present. All rights are otherwise reserved.
