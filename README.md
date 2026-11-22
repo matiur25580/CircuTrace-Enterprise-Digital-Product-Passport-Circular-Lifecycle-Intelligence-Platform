@@ -7,7 +7,7 @@ CircuTrace is an enterprise platform concept for managing trusted product inform
 
 It is being developed as a production-oriented **MERN** application with a modular architecture, evidence-backed data, tenant isolation, and auditable workflows.
 
-> **Project status:** Architecture and initial MERN application foundation are in place. The web and API applications are scaffolds; business capabilities are still planned and are not yet implemented or certified.
+> **Project status:** Architecture, MERN workspace foundation, and the initial API identity/authentication layer are implemented on milestone branches. Tenant membership, organization authorization, product workflows, and compliance capabilities remain planned.
 
 ## Why CircuTrace
 
@@ -83,7 +83,7 @@ docs/
 
 ## Application foundation
 
-The initial workspace scaffold is available on the `feat/milestone-2-mern-foundation` branch. It contains the React/Vite web shell, Express API health endpoints, shared TypeScript and validation packages, pnpm/Turborepo workspace tooling, local MongoDB Compose configuration, and a GitHub Actions verification workflow. This is an early development scaffold; hosted CI and local install/build results must be verified before treating it as release-ready. See [local development setup](docs/development/local-setup.md).
+The MERN workspace foundation is available on `feat/milestone-2-mern-foundation`; the identity and authentication foundation is available on `feat/milestone-3-enterprise-auth`. The API includes registration, login, refresh-token rotation, logout, protected identity and session-management endpoints. See [local development setup](docs/development/local-setup.md) and [authentication security design](docs/security/authentication.md).
 
 ## Documentation
 
@@ -93,6 +93,7 @@ The initial workspace scaffold is available on the `feat/milestone-2-mern-founda
 - [Domain model](docs/database/domain-model.md)
 - [API conventions](docs/api/api-conventions.md)
 - [Tenant isolation and security](docs/security/tenant-isolation.md)
+- [Authentication design and API](docs/security/authentication.md)
 - [Development roadmap](docs/development/roadmap.md)
 - [Contributing](CONTRIBUTING.md)
 
@@ -102,7 +103,7 @@ The project will progress through small, verifiable milestones: architecture and
 
 ## Development status
 
-No application runtime is shipped in this foundation milestone. Implementation, automated tests, deployment workflows, and operational runbooks will be added and validated in subsequent milestones.
+The API foundation and identity endpoints are implemented, with automated validation, token, and password tests. Organization membership and tenant-scoped authorization are intentionally deferred to Milestone 4. Production deployment, email verification, password recovery, MFA, and independent security review are not yet delivered.
 
 ## Responsible product claims
 
