@@ -13,6 +13,15 @@ import {
 } from './auth.service.js';
 
 const router = Router();
+
+router.use((request, _response, next) => {
+  const origin = request.get('origin');
+  if (origin && origin !== env.CORS_ORIGIN) {
+    next(new AuthError('UNTRUSTED_ORIGIN', 'Requests from this origin are not allowed.', 403));
+    return;
+  }
+  next();
+});
 const REFRESH_COOKIE = 'circutrace_refresh';
 const cookieOptions = {
   httpOnly: true,
