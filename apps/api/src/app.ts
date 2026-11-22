@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import { env } from './config/env.js';
 import { AuthError } from './auth/auth-error.js';
 import { authRouter } from './auth/auth.routes.js';
+import { organizationRouter } from './organizations/organization.routes.js';
 
 export const app: Express = express();
 
@@ -66,6 +67,7 @@ app.get('/api/v1/ready', (_request, response) => {
 });
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/organizations', organizationRouter);
 
 app.use((_request, response) => {
   response.status(404).json({
