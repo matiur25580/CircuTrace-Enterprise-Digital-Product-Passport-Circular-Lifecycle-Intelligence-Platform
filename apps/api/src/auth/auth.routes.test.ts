@@ -24,6 +24,15 @@ describe('authentication API validation and access controls', () => {
     expect(response.body.error.code).toBe('VALIDATION_ERROR');
   });
 
+  it('rejects authentication requests from an untrusted browser origin', async () => {
+    const response = await request(app)
+      .post('/api/v1/auth/refresh')
+      .set('Origin', 'https://untrusted.example');
+
+    expect(response.status).toBe(403);
+    expect(response.body.error.code).toBe('UNTRUSTED_ORIGIN');
+  });
+
   it('requires a refresh cookie to rotate a session', async () => {
     const response = await request(app).post('/api/v1/auth/refresh');
 
