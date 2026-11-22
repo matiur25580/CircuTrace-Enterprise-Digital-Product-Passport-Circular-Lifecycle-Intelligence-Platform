@@ -42,7 +42,7 @@ Partner list filters: `type`, `status`, and `search`. Results are sorted by name
 
 ## Frontend integration
 
-The authenticated workspace renders a partner directory for the currently selected organization. It loads records from the organization-scoped API, supports server-side name search and type/status filters, provides a create form for managers, and shows partner profile details. Owner/admin users can suspend and reactivate records; read-only members and viewers cannot see management controls. The UI reports loading, error, and empty states and never substitutes sample records.
+The authenticated workspace renders a partner directory for the currently selected organization. It loads records from the organization-scoped API, supports server-side name search and type/status filters, provides a create form for managers, and shows partner profile details. Owner/admin users can suspend and reactivate records; read-only members and viewers cannot see management controls. The UI reports loading, error, and empty states and never substitutes sample records. Partner profiles with a primary contact email expose invitation creation, invitation history, and revocation to managers. The raw one-time token is displayed only in the inviter's active session so it can be copied and delivered out of band; invitation status shows pending, accepted, revoked, or expired.
 
 ## Deferred
 
