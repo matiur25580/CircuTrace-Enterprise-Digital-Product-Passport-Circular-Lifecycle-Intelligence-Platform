@@ -8,6 +8,7 @@
 - Owner/admin can create and manage partner records. Active members and viewers can read partner records.
 - Duplicate external references are rejected within an organization; references may be reused by a different organization.
 - Partner identifiers are never treated as authorization credentials. Every operation revalidates active organization membership and tenant ownership.
+- Directed partner relationships connect two partner records within the same organization, with relationship type, optional description, lifecycle status, effective dates, and uniqueness enforcement.
 - Integration tests cover tenant isolation, role enforcement, input validation, duplicate references, and status filtering.
 - Partner profile editing is available to owners and admins; read-only roles can inspect partner details without management controls.
 
@@ -29,7 +30,7 @@ All endpoints require a valid access token.
 | Method | Path | Permission |
 | --- | --- | --- |
 | GET | `/api/v1/organizations/:organizationId/partners` | `partners:read` |
-| POST | `/api/v1/organizations/:organizationId/partners` | `partners:manage` |
+| POST | `/api/v1/organizations/:organizationId/partners` | `partners:manage` |\n| GET | `/api/v1/organizations/:organizationId/partner-relationships` | `partners:read` |\n| POST | `/api/v1/organizations/:organizationId/partner-relationships` | `partners:manage` |\n| PATCH | `/api/v1/organizations/:organizationId/partner-relationships/:relationshipId/status` | `partners:manage` |
 | GET | `/api/v1/organizations/:organizationId/partners/:partnerId` | `partners:read` |
 | PATCH | `/api/v1/organizations/:organizationId/partners/:partnerId` | `partners:manage` |
 | PATCH | `/api/v1/organizations/:organizationId/partners/:partnerId/status` | `partners:manage` |

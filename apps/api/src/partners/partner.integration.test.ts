@@ -8,6 +8,7 @@ import { MembershipModel } from '../organizations/membership.model.js';
 import { OrganizationModel } from '../organizations/organization.model.js';
 import { PartnerInvitationModel } from './partner-invitation.model.js';
 import { PartnerModel } from './partner.model.js';
+import { PartnerRelationshipModel } from './partner-relationship.model.js';
 
 const mongoUri = process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/circutrace_test';
 async function register(email: string) {
@@ -19,7 +20,7 @@ describe('partner network tenant boundaries (MongoDB integration)', () => {
   beforeAll(async () => { await mongoose.connect(mongoUri); });
   beforeEach(async () => {
     await Promise.all([
-      PartnerInvitationModel.deleteMany({}), PartnerModel.deleteMany({}), InvitationModel.deleteMany({}), MembershipModel.deleteMany({}),
+      PartnerInvitationModel.deleteMany({}), PartnerRelationshipModel.deleteMany({}), PartnerModel.deleteMany({}), InvitationModel.deleteMany({}), MembershipModel.deleteMany({}),
       OrganizationModel.deleteMany({}), UserModel.deleteMany({}),
     ]);
   });
