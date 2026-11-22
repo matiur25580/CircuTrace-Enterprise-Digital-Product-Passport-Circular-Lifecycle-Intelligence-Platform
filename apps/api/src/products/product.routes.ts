@@ -13,8 +13,8 @@ function actor(request: { auth?: { userId: string } }) {
   if (!request.auth) throw new AuthError('AUTHENTICATION_REQUIRED', 'A valid access token is required.');
   return request.auth.userId;
 }
-function organizationId(request: { params: { organizationId?: string } }) {
-  const value = request.params.organizationId ?? '';
+function organizationId(value?: string) {
+  value = value ?? '';
   if (!objectId.test(value)) throw new AuthError('ORGANIZATION_NOT_FOUND', 'The organization was not found.', 404);
   return value;
 }
@@ -44,7 +44,7 @@ const materialSchema = z.object({
 
 router.get('/', async (req, res) => {
   const filters = parse(z.object({ status: z.enum(PRODUCT_STATUSES).optional(), search: z.string().trim().min(1).max(100).optional() }).strict(), req.query);
-  res.json({ data: { products: await listProducts(actor(req), organizationId(req), filters) } });
+  res.json({ data: { products: await listProducts(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), filters) } });
 });
 router.post('/', async (req, res) => {
   res.status(201).json({ data: { product: await createProduct(actor(req), organizationId(req), parse(productSchema, req.body)) } });
