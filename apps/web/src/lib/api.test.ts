@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPartner, getAccessToken, listOrganizations, listPartners, login, logout, refreshSession, setAccessToken, updatePartner } from './api';
+import { acceptPartnerInvitation, createPartner, createPartnerInvitation, getAccessToken, listOrganizations, listPartnerInvitations, listPartners, login, logout, refreshSession, revokePartnerInvitation, setAccessToken, updatePartner } from './api';
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
@@ -68,4 +68,33 @@ describe('partner directory API', () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain('/organizations/org1/partners/p2');
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'PATCH', body: JSON.stringify({ name: 'Updated Supplier' }) });
   });
+
+  it('creates a partner invitation without exposing an invitation token in the URL', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ data: { invitation: { id: 'i1', email: 'contact@example.com', expiresAt: '2026-12-01T00:00:00.000Z' }, token: 'one-time-secret-token' } }, 201));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await createPartnerInvitation('org1', 'partner1');
+    expect(result.token).toBe('one-time-secret-token');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/organizations/org1/partners/partner1/invitations');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST' });
+  });
+  it('lists and revokes invitations using partner-scoped endpoints', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ data: { invitations: [{ _id: 'i1', email: 'contact@example.com', expiresAt: '2026-12-01T00:00:00.000Z', acceptedAt: null, revokedAt: null, createdAt: '2026-11-22T00:00:00.000Z' }] } }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const invitations = await listPartnerInvitations('org1', 'partner1');
+    await revokePartnerInvitation('org1', 'partner1', 'i1');
+    expect(invitations).toHaveLength(1);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/partners/partner1/invitations');
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: 'DELETE' });
+  });
+  it('accepts a partner invitation with the authenticated API session', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse({ data: { accepted: true, partnerId: 'p1', organizationId: 'org1' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await acceptPartnerInvitation('one-time-token');
+    expect(result.accepted).toBe(true);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/partner-invitations/accept');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ token: 'one-time-token' }) });
+  });
+
 });
