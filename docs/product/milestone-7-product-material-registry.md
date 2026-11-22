@@ -19,6 +19,7 @@ All endpoints require authentication.
 | --- | --- | --- |
 | GET/POST | `/api/v1/organizations/:organizationId/products` | `products:read/manage` |
 | GET/PATCH | `/api/v1/organizations/:organizationId/products/:productId` | `products:read/manage` |
+| GET/POST | `/api/v1/organizations/:organizationId/products/:productId/variants` | `products:read/manage` |
 | GET/POST | `/api/v1/organizations/:organizationId/products/:productId/components` | `products:read/manage` |
 | GET/POST | `/api/v1/organizations/:organizationId/products/:productId/components/:componentId/materials` | `products:read/manage` |
 
@@ -37,3 +38,10 @@ List endpoints are bounded to 100 products or 200 child records. No arbitrary or
 - Owners and administrators can register products; members and viewers can browse.
 - Product detail view loads components and material composition and provides authorized forms to add component and material records.
 - All visible records are loaded from the API; the UI does not use fabricated catalogue data.
+
+## Product variants API
+
+- `GET /api/v1/organizations/:organizationId/products/:productId/variants` lists up to 200 variants for a verified tenant product.
+- `POST /api/v1/organizations/:organizationId/products/:productId/variants` creates a variant with a tenant/product-local SKU, optional checksum-validated GTIN, optional display name, and up to 30 bounded string attributes.
+- Duplicate variant SKUs and organization GTINs return conflict responses; invalid GTIN check digits return validation errors.
+- Variant access uses the same owner/admin manage and member/viewer read permission model as the product catalogue.

@@ -70,3 +70,21 @@ describe('product and material registry (MongoDB integration)', () => {
     expect(badProduct.status).toBe(400);
   });
 });
+
+  it('creates and lists product variants with GTIN checksum validation and scoped uniqueness', async () => {
+    const token = await register('catalog-variants@example.com');
+    const org = await request(app).post('/api/v1/organizations').set('Authorization', 'Bearer ' + token).send({ name: 'Variant Catalog' });
+    const orgId = org.body.data.organization._id as string;
+    const product = await request(app).post('/api/v1/organizations/' + orgId + '/products').set('Authorization', 'Bearer ' + token).send({ sku: 'VAR-PARENT', name: 'Variant Parent' });
+    const path = '/api/v1/organizations/' + orgId + '/products/' + product.body.data.product._id + '/variants';
+    const variant = await request(app).post(path).set('Authorization', 'Bearer ' + token).send({ sku: 'VAR-BLACK-M', gtin: '4006381333931', name: 'Black / Medium', attributes: { color: 'black', size: 'M' } });
+    expect(variant.status).toBe(201);
+    expect(variant.body.data.variant.sku).toBe('VAR-BLACK-M');
+    const listed = await request(app).get(path).set('Authorization', 'Bearer ' + token);
+    expect(listed.status).toBe(200);
+    expect(listed.body.data.variants).toHaveLength(1);
+    const duplicate = await request(app).post(path).set('Authorization', 'Bearer ' + token).send({ sku: 'VAR-BLACK-M', gtin: '4006381333931' });
+    expect(duplicate.status).toBe(409);
+    const badGtin = await request(app).post(path).set('Authorization', 'Bearer ' + token).send({ sku: 'VAR-BAD', gtin: '4006381333932' });
+    expect(badGtin.status).toBe(400);
+  });

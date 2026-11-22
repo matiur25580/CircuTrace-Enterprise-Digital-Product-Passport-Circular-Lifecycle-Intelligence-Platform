@@ -4,7 +4,7 @@ import { AuthError } from '../auth/auth-error.js';
 import { authenticate } from '../auth/auth.middleware.js';
 import { PRODUCT_STATUSES } from './product.model.js';
 import { MATERIAL_CATEGORIES } from './material.model.js';
-import { createComponent, createMaterial, createProduct, getProduct, listComponents, listMaterials, listProducts, updateProduct } from './product.service.js';
+import { createComponent, createMaterial, createProduct, createVariant, getProduct, listComponents, listMaterials, listProducts, listVariants, updateProduct } from './product.service.js';
 
 const router: ExpressRouter = Router({ mergeParams: true });
 router.use(authenticate);
@@ -34,6 +34,19 @@ const componentSchema = z.object({
   description: z.string().trim().max(2000).nullable().optional(), quantity: z.number().positive().max(1000000000),
   unit: z.string().trim().min(1).max(24), supplierPartnerId: z.string().regex(objectId).nullable().optional(),
 }).strict();
+function validGtin(value: string) {
+  if (!/^(?:[0-9]{8}|[0-9]{12}|[0-9]{13}|[0-9]{14})$/.test(value)) return false;
+  const digits = value.split('').map(Number);
+  const check = digits.pop()!;
+  const sum = digits.reduce((total, digit, index) => total + digit * ((digits.length - index) % 2 === 0 ? 3 : 1), 0);
+  return (10 - (sum % 10)) % 10 === check;
+}
+const variantSchema = z.object({
+  sku: z.string().trim().min(2).max(80),
+  gtin: z.string().trim().refine(validGtin, 'GTIN must have a valid length and check digit.').nullable().optional(),
+  name: z.string().trim().max(160).nullable().optional(),
+  attributes: z.record(z.string().trim().min(1).max(80)).refine((value) => Object.keys(value).length <= 30, 'A variant can have at most 30 attributes.').optional(),
+}).strict();
 const materialSchema = z.object({
   name: z.string().trim().min(2).max(160), category: z.enum(MATERIAL_CATEGORIES),
   mass: z.number().positive().max(1000000000), massUnit: z.enum(['g', 'kg', 'mg']).default('g'),
@@ -54,6 +67,12 @@ router.get('/:productId', async (req, res) => {
 });
 router.patch('/:productId', async (req, res) => {
   res.json({ data: { product: await updateProduct(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '', parse(updateSchema, req.body)) } });
+});
+router.get('/:productId/variants', async (req, res) => {
+  res.json({ data: { variants: await listVariants(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '') } });
+});
+router.post('/:productId/variants', async (req, res) => {
+  res.status(201).json({ data: { variant: await createVariant(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '', parse(variantSchema, req.body)) } });
 });
 router.get('/:productId/components', async (req, res) => {
   res.json({ data: { components: await listComponents(actor(req), organizationId((req.params as { organizationId?: string }).organizationId), req.params.productId ?? '') } });

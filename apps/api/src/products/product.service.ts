@@ -5,6 +5,7 @@ import { PartnerModel } from '../partners/partner.model.js';
 import { ProductModel } from './product.model.js';
 import { ComponentModel } from './component.model.js';
 import { MaterialModel, type MATERIAL_CATEGORIES } from './material.model.js';
+import { ProductVariantModel } from './product-variant.model.js';
 
 type ProductInput = { sku: string; name: string; description?: string | null; category?: string | null; brandPartnerId?: string | null };
 function invalidId(value: string) { return !Types.ObjectId.isValid(value); }
@@ -82,4 +83,28 @@ export async function createMaterial(userId: string, organizationId: string, pro
   if (!component) throw notFound('COMPONENT_NOT_FOUND', 'The component was not found.');
   const supplierPartnerId = await requirePartnerScope(organizationId, input.supplierPartnerId);
   return MaterialModel.create({ ...input, massUnit: input.massUnit ?? 'g', organizationId, productId, componentId, supplierPartnerId });
+}
+
+type VariantInput = { sku: string; gtin?: string | null; name?: string | null; attributes?: Record<string, string> };
+export async function listVariants(userId: string, organizationId: string, productId: string) {
+  await requirePermission(userId, organizationId, 'products:read');
+  if (invalidId(productId)) throw notFound('PRODUCT_NOT_FOUND', 'The product was not found.');
+  const product = await ProductModel.findOne({ _id: productId, organizationId }).select('_id').lean().exec();
+  if (!product) throw notFound('PRODUCT_NOT_FOUND', 'The product was not found.');
+  return ProductVariantModel.find({ organizationId, productId }).sort({ sku: 1 }).limit(200).lean().exec();
+}
+export async function createVariant(userId: string, organizationId: string, productId: string, input: VariantInput) {
+  await requirePermission(userId, organizationId, 'products:manage');
+  if (invalidId(productId)) throw notFound('PRODUCT_NOT_FOUND', 'The product was not found.');
+  const product = await ProductModel.findOne({ _id: productId, organizationId }).select('_id').lean().exec();
+  if (!product) throw notFound('PRODUCT_NOT_FOUND', 'The product was not found.');
+  try {
+    return await ProductVariantModel.create({ ...input, sku: input.sku.trim().toUpperCase(), name: input.name?.trim() || null, gtin: input.gtin?.trim() || null, attributes: input.attributes ?? {}, organizationId, productId });
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
+      const gtinConflict = 'keyPattern' in error && typeof error.keyPattern === 'object' && error.keyPattern !== null && 'gtin' in error.keyPattern;
+      throw new AuthError(gtinConflict ? 'GTIN_CONFLICT' : 'VARIANT_SKU_CONFLICT', gtinConflict ? 'That GTIN is already registered in this organization.' : 'That variant SKU is already used for this product.', 409);
+    }
+    throw error;
+  }
 }
