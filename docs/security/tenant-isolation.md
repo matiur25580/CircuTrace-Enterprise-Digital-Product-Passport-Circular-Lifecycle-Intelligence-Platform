@@ -36,9 +36,13 @@ Permission checks should answer:
 - Which resource is targeted?
 - Is the principal authorized for that action on that resource in this tenant?
 
-## Authentication direction
+## Authentication implementation baseline
 
-Use short-lived access credentials and a secure refresh/session lifecycle. If refresh tokens are used, store only a cryptographic hash server-side, rotate on use, detect reuse, and support revocation. Passwords must use a modern adaptive password hash. Exact provider and cookie/token transport decisions remain open pending implementation.
+The initial API identity layer uses bcryptjs (cost 12) for password hashing; passwords are never stored in plaintext. Access tokens are signed HS256 JWTs with a 15-minute default lifetime and a required production secret. Refresh credentials are opaque random tokens; only SHA-256 hashes are stored in MongoDB. Refresh tokens rotate on every use. Reuse of a revoked token revokes the remaining active sessions in that token family. Session records expire through a MongoDB TTL index and can be listed or revoked by the owning user.
+
+Refresh tokens are delivered only in an HttpOnly, SameSite=Strict cookie (Secure in production), scoped to `/api/v1/auth`. Authentication routes reject browser requests with an Origin that differs from configured `CORS_ORIGIN`. Access tokens are returned in the JSON response and should be held in memory by browser clients rather than persisted in localStorage. The API checks the backing session on protected requests so logout/session revocation takes effect immediately for access-token requests.
+
+This is a first-party credential foundation, not a complete identity lifecycle. Email verification, password reset, MFA, SSO, organization membership, tenant resolution, and role-based authorization are deferred.
 
 ## Audit expectations
 

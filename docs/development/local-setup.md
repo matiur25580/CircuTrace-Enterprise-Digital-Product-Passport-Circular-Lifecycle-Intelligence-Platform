@@ -13,6 +13,7 @@ corepack enable
 pnpm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
+# Replace AUTH_ACCESS_TOKEN_SECRET in apps/api/.env with a unique secret (32+ characters).
 ```
 
 ## Start MongoDB
@@ -33,7 +34,7 @@ pnpm dev
 - API health: http://localhost:4000/api/v1/health
 - API readiness placeholder: http://localhost:4000/api/v1/ready
 
-The current readiness endpoint is a scaffold and does not verify database connectivity. Dependency-aware readiness will be implemented with the persistence milestone.
+The readiness endpoint returns 503 until MongoDB is connected. Start MongoDB before using registration, login, refresh, or session-management endpoints.
 
 ## Quality commands
 
@@ -49,4 +50,4 @@ pnpm format:check
 
 Never commit real environment files, credentials, production URLs, or customer data. Production startup requires `MONGODB_URI`; local development can run the API without a database for the initial health-check scaffold.
 
-Business-domain routes, authentication, tenant resolution, authorization, and persistence-backed readiness are not implemented yet. The web page is a foundation preview rather than the authenticated enterprise workspace. The first hosted CI run must be inspected before describing CI as passing.
+Authentication routes are implemented in the API, but organization membership, tenant resolution, and role-based authorization are not yet implemented. The web page remains a foundation preview rather than the authenticated enterprise workspace. Configure a unique production `AUTH_ACCESS_TOKEN_SECRET`; production startup must also have `MONGODB_URI`.
