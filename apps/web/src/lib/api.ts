@@ -162,3 +162,57 @@ export async function revokePartnerInvitation(organizationId: string, partnerId:
 export async function acceptPartnerInvitation(token: string): Promise<{ accepted: true; partnerId: string; organizationId: string }> {
   return request<{ accepted: true; partnerId: string; organizationId: string }>('/partner-invitations/accept', { method: 'POST', body: JSON.stringify({ token }) });
 }
+
+export type PartnerRelationshipType = 'supplies_to' | 'manufactures_for' | 'distributes_to' | 'transports_for' | 'services' | 'repairs_for' | 'refurbishes_for' | 'recycles_for';
+export type PartnerRelationshipStatus = 'active' | 'inactive';
+export interface PartnerRelationshipEndpoint {
+  _id: string;
+  name: string;
+  type: PartnerType;
+  status: PartnerStatus;
+}
+export interface PartnerRelationship {
+  _id: string;
+  sourcePartnerId: PartnerRelationshipEndpoint;
+  targetPartnerId: PartnerRelationshipEndpoint;
+  type: PartnerRelationshipType;
+  description?: string | null;
+  status: PartnerRelationshipStatus;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface PartnerRelationshipInput {
+  sourcePartnerId: string;
+  targetPartnerId: string;
+  type: PartnerRelationshipType;
+  description?: string;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+}
+export async function listPartnerRelationships(
+  organizationId: string,
+  filters: { partnerId?: string; type?: PartnerRelationshipType | ''; status?: PartnerRelationshipStatus | '' } = {},
+): Promise<PartnerRelationship[]> {
+  const params = new URLSearchParams();
+  if (filters.partnerId) params.set('partnerId', filters.partnerId);
+  if (filters.type) params.set('type', filters.type);
+  if (filters.status) params.set('status', filters.status);
+  const query = params.size ? `?${params.toString()}` : '';
+  const result = await request<{ relationships: PartnerRelationship[] }>(`/organizations/${encodeURIComponent(organizationId)}/partner-relationships${query}`);
+  return result.relationships;
+}
+export async function createPartnerRelationship(organizationId: string, input: PartnerRelationshipInput): Promise<PartnerRelationship> {
+  const result = await request<{ relationship: PartnerRelationship }>(`/organizations/${encodeURIComponent(organizationId)}/partner-relationships`, { method: 'POST', body: JSON.stringify(input) });
+  return result.relationship;
+}
+export async function updatePartnerRelationshipStatus(
+  organizationId: string, relationshipId: string, status: PartnerRelationshipStatus,
+): Promise<PartnerRelationship> {
+  const result = await request<{ relationship: PartnerRelationship }>(
+    `/organizations/${encodeURIComponent(organizationId)}/partner-relationships/${encodeURIComponent(relationshipId)}/status`,
+    { method: 'PATCH', body: JSON.stringify({ status }) },
+  );
+  return result.relationship;
+}
