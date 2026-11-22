@@ -87,7 +87,7 @@ export async function listMembers(userId: string, organizationId: string) {
 }
 
 export async function changeMemberRole(actorId: string, organizationId: string, membershipId: string, role: OrganizationRole) {
-  const actor = await requirePermission(actorId, organizationId, 'members:manage');
+  await requirePermission(actorId, organizationId, 'members:manage');
   if (role === 'owner') throw new AuthError('OWNER_ROLE_RESERVED', 'Ownership changes require a dedicated, atomic ownership-transfer workflow.', 409);
   const target = await MembershipModel.findOne({ _id: membershipId, organizationId, status: 'active' }).exec();
   if (!target) throw new AuthError('MEMBERSHIP_NOT_FOUND', 'The membership was not found.', 404);
