@@ -76,10 +76,10 @@ export async function listMaterials(userId: string, organizationId: string, prod
   if (!component) throw notFound('COMPONENT_NOT_FOUND', 'The component was not found.');
   return MaterialModel.find({ organizationId, productId, componentId }).sort({ name: 1 }).limit(200).lean().exec();
 }
-export async function createMaterial(userId: string, organizationId: string, productId: string, componentId: string, input: { name: string; category: typeof MATERIAL_CATEGORIES[number]; mass: number; massUnit: 'g' | 'kg' | 'mg'; recycledContentPct?: number | null; originCountryCode?: string | null; supplierPartnerId?: string | null }) {
+export async function createMaterial(userId: string, organizationId: string, productId: string, componentId: string, input: { name: string; category: typeof MATERIAL_CATEGORIES[number]; mass: number; massUnit?: 'g' | 'kg' | 'mg'; recycledContentPct?: number | null; originCountryCode?: string | null; supplierPartnerId?: string | null }) {
   await requirePermission(userId, organizationId, 'products:manage');
   const component = await ComponentModel.findOne({ _id: componentId, productId, organizationId }).select('_id').lean().exec();
   if (!component) throw notFound('COMPONENT_NOT_FOUND', 'The component was not found.');
   const supplierPartnerId = await requirePartnerScope(organizationId, input.supplierPartnerId);
-  return MaterialModel.create({ ...input, organizationId, productId, componentId, supplierPartnerId });
+  return MaterialModel.create({ ...input, massUnit: input.massUnit ?? 'g', organizationId, productId, componentId, supplierPartnerId });
 }
