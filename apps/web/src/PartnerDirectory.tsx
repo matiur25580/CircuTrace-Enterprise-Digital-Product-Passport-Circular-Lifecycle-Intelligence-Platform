@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
-  ApiClientError, createPartner, listPartners, updatePartnerStatus,
+  ApiClientError, createPartner, listPartners, updatePartner, updatePartnerStatus,
   type Partner, type PartnerInput, type PartnerStatus, type PartnerType,
 } from './lib/api';
 
@@ -23,6 +23,15 @@ export function PartnerDirectory({ organizationId, canManage }: { organizationId
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<Partner | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editBusy, setEditBusy] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editLegalName, setEditLegalName] = useState('');
+  const [editWebsite, setEditWebsite] = useState('');
+  const [editCountryCode, setEditCountryCode] = useState('');
+  const [editContactName, setEditContactName] = useState('');
+  const [editContactEmail, setEditContactEmail] = useState('');
+  const [editExternalReference, setEditExternalReference] = useState('');
   const [name, setName] = useState('');
   const [partnerType, setPartnerType] = useState<PartnerType>('supplier');
   const [legalName, setLegalName] = useState('');
@@ -59,6 +68,28 @@ export function PartnerDirectory({ organizationId, canManage }: { organizationId
     catch (cause) { setError(message(cause)); }
     finally { setBusy(false); }
   }
+  function beginEdit(partner: Partner) {
+    setSelected(partner); setEditing(true); setEditName(partner.name); setEditLegalName(partner.legalName || '');
+    setEditWebsite(partner.website || ''); setEditCountryCode(partner.countryCode || '');
+    setEditContactName(partner.contact?.name || ''); setEditContactEmail(partner.contact?.email || '');
+    setEditExternalReference(partner.externalReference || '');
+  }
+  async function saveEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); if (!selected) return;
+    setEditBusy(true); setError('');
+    const input: Partial<PartnerInput> = {
+      name: editName.trim(), legalName: editLegalName.trim() || null,
+      website: editWebsite.trim() || null, countryCode: editCountryCode.trim().toUpperCase() || null,
+      externalReference: editExternalReference.trim() || null,
+      contact: { name: editContactName.trim() || null, email: editContactEmail.trim() || null },
+    };
+    try {
+      const updated = await updatePartner(organizationId, selected._id, input);
+      setPartners((items) => items.map((item) => item._id === updated._id ? updated : item));
+      setSelected(updated); setEditing(false);
+    } catch (cause) { setError(message(cause)); }
+    finally { setEditBusy(false); }
+  }
   async function changeStatus(partner: Partner, next: PartnerStatus) {
     setBusy(true); setError('');
     try {
@@ -93,7 +124,7 @@ export function PartnerDirectory({ organizationId, canManage }: { organizationId
       <button className="secondary-button" type="button" onClick={() => void load()} disabled={loading}>Refresh</button>
     </div>
     {loading ? <div className="partner-empty" role="status">Loading organization partners…</div> : partners.length === 0 ? <div className="partner-empty"><span aria-hidden="true">◎</span><h3>No partners found</h3><p>{search || type || status ? 'Try changing your search or filters.' : 'Add your first supplier, manufacturer, or circularity partner to begin.'}</p></div> :
-      <div className="partner-table-wrap"><table className="partner-table"><thead><tr><th scope="col">Partner</th><th scope="col">Type</th><th scope="col">Country</th><th scope="col">Status</th><th scope="col">Contact</th><th scope="col">Actions</th></tr></thead><tbody>{partners.map((partner) => <tr key={partner._id}><td><button className="partner-name-button" type="button" onClick={() => setSelected(partner)}>{partner.name}</button><small>{partner.legalName || partner.externalReference || 'Partner record'}</small></td><td>{partnerTypes.find((item) => item.value === partner.type)?.label || partner.type}</td><td>{partner.countryCode || '—'}</td><td><span className={'partner-status status-' + partner.status}>{partner.status}</span></td><td>{partner.contact?.name || partner.contact?.email || '—'}</td><td><button className="text-action" type="button" onClick={() => setSelected(partner)}>View</button>{canManage && partner.status !== 'archived' && <button className="text-action" type="button" disabled={busy} onClick={() => void changeStatus(partner, partner.status === 'active' ? 'suspended' : 'active')}>{partner.status === 'active' ? 'Suspend' : 'Reactivate'}</button>}</td></tr>)}</tbody></table></div>}
-    {selected && <div className="partner-detail-backdrop" role="presentation" onClick={() => setSelected(null)}><section className="partner-detail" role="dialog" aria-modal="true" aria-labelledby="partner-detail-title" onClick={(event) => event.stopPropagation()}><button className="detail-close" type="button" onClick={() => setSelected(null)} aria-label="Close partner details">×</button><p className="eyebrow">PARTNER PROFILE</p><h2 id="partner-detail-title">{selected.name}</h2><p className="partner-detail-type">{partnerTypes.find((item) => item.value === selected.type)?.label} · {selected.status}</p><dl><dt>Legal name</dt><dd>{selected.legalName || '—'}</dd><dt>Website</dt><dd>{selected.website || '—'}</dd><dt>Country</dt><dd>{selected.countryCode || '—'}</dd><dt>External reference</dt><dd>{selected.externalReference || '—'}</dd><dt>Contact</dt><dd>{selected.contact?.name || '—'} {selected.contact?.email ? `· ${selected.contact.email}` : ''}</dd><dt>Created</dt><dd>{new Date(selected.createdAt).toLocaleDateString()}</dd></dl></section></div>}
+      <div className="partner-table-wrap"><table className="partner-table"><thead><tr><th scope="col">Partner</th><th scope="col">Type</th><th scope="col">Country</th><th scope="col">Status</th><th scope="col">Contact</th><th scope="col">Actions</th></tr></thead><tbody>{partners.map((partner) => <tr key={partner._id}><td><button className="partner-name-button" type="button" onClick={() => { setSelected(partner); setEditing(false); }}>{partner.name}</button><small>{partner.legalName || partner.externalReference || 'Partner record'}</small></td><td>{partnerTypes.find((item) => item.value === partner.type)?.label || partner.type}</td><td>{partner.countryCode || '—'}</td><td><span className={'partner-status status-' + partner.status}>{partner.status}</span></td><td>{partner.contact?.name || partner.contact?.email || '—'}</td><td><button className="text-action" type="button" onClick={() => { setSelected(partner); setEditing(false); }}>View</button>{canManage && <button className="text-action" type="button" onClick={() => beginEdit(partner)}>Edit</button>}{canManage && partner.status !== 'archived' && <button className="text-action" type="button" disabled={busy} onClick={() => void changeStatus(partner, partner.status === 'active' ? 'suspended' : 'active')}>{partner.status === 'active' ? 'Suspend' : 'Reactivate'}</button>}</td></tr>)}</tbody></table></div>}
+    {selected && <div className="partner-detail-backdrop" role="presentation" onClick={() => setSelected(null)}><section className="partner-detail" role="dialog" aria-modal="true" aria-labelledby="partner-detail-title" onClick={(event) => event.stopPropagation()}><button className="detail-close" type="button" onClick={() => setSelected(null)} aria-label="Close partner details">×</button><p className="eyebrow">{editing ? 'EDIT PARTNER' : 'PARTNER PROFILE'}</p><h2 id="partner-detail-title">{editing ? 'Update partner details' : selected.name}</h2><p className="partner-detail-type">{partnerTypes.find((item) => item.value === selected.type)?.label} · {selected.status}</p>{editing ? <form className="partner-edit-form" onSubmit={saveEdit}><label>Partner name<input value={editName} onChange={(event) => setEditName(event.target.value)} minLength={2} maxLength={160} required /></label><label>Legal name<input value={editLegalName} onChange={(event) => setEditLegalName(event.target.value)} maxLength={200} /></label><label>Website<input type="url" value={editWebsite} onChange={(event) => setEditWebsite(event.target.value)} placeholder="https://example.com" /></label><label>Country code<input value={editCountryCode} onChange={(event) => setEditCountryCode(event.target.value)} pattern="[A-Za-z]{2}" maxLength={2} /></label><label>External reference<input value={editExternalReference} onChange={(event) => setEditExternalReference(event.target.value)} maxLength={120} /></label><label>Contact name<input value={editContactName} onChange={(event) => setEditContactName(event.target.value)} maxLength={120} /></label><label>Contact email<input type="email" value={editContactEmail} onChange={(event) => setEditContactEmail(event.target.value)} maxLength={254} /></label><div className="partner-form-actions"><button className="secondary-button" type="button" onClick={() => setEditing(false)}>Cancel</button><button className="primary-button" type="submit" disabled={editBusy}>{editBusy ? 'Saving…' : 'Save changes'}</button></div></form> : <><dl><dt>Legal name</dt><dd>{selected.legalName || '—'}</dd><dt>Website</dt><dd>{selected.website || '—'}</dd><dt>Country</dt><dd>{selected.countryCode || '—'}</dd><dt>External reference</dt><dd>{selected.externalReference || '—'}</dd><dt>Contact</dt><dd>{selected.contact?.name || '—'} {selected.contact?.email ? `· ${selected.contact.email}` : ''}</dd><dt>Created</dt><dd>{new Date(selected.createdAt).toLocaleDateString()}</dd></dl>{canManage && <div className="partner-form-actions"><button className="primary-button" type="button" onClick={() => beginEdit(selected)}>Edit partner</button></div>}</>}</section></div>}
   </section>;
 }

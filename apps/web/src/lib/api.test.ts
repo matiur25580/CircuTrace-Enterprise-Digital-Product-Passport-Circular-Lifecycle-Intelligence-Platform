@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPartner, getAccessToken, listOrganizations, listPartners, login, logout, refreshSession, setAccessToken } from './api';
+import { createPartner, getAccessToken, listOrganizations, listPartners, login, logout, refreshSession, setAccessToken, updatePartner } from './api';
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
@@ -57,7 +57,7 @@ describe('partner directory API', () => {
     vi.stubGlobal('fetch', fetchMock);
     const partner = await createPartner('org1', { name: 'New Supplier', type: 'supplier' });
     expect(partner._id).toBe('p2');
-    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('/organizations/org1/partners');
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/organizations/org1/partners');
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST', body: JSON.stringify({ name: 'New Supplier', type: 'supplier' }) });
   });
 });
