@@ -17,22 +17,21 @@ function conflict(error: unknown, code: string, message: string): never {
 async function requirePartnerScope(organizationId: string, partnerId?: string | null) {
   if (!partnerId) return null;
   if (invalidId(partnerId)) throw notFound('PARTNER_NOT_FOUND', 'The partner was not found.');
-  const partner = await PartnerModel.findOne({ _id: partnerId, organizationId, status: 'active' }).select('_id').lean().exec();
+  const partnerObjectId = new Types.ObjectId(partnerId);
+  const organizationObjectId = new Types.ObjectId(organizationId);
+  const partner = await PartnerModel.findOne({ _id: partnerObjectId, organizationId: organizationObjectId, status: 'active' }).select('_id').lean().exec();
   if (!partner) throw notFound('PARTNER_NOT_FOUND', 'The partner was not found.');
   return partner._id;
 }
 export async function listProducts(userId: string, organizationId: string, filters: { status?: string; search?: string }) {
   await requirePermission(userId, organizationId, 'products:read');
   const status = PRODUCT_STATUSES.find((candidate) => candidate === filters.status);
-  const search = typeof filters.search === 'string' ? filters.search.trim().slice(0, 100) : '';
-  const regexMeta = [36, 40, 41, 42, 43, 46, 63, 91, 92, 93, 94, 123, 124, 125];
-  const escapedSearch = [...search].map((character) => regexMeta.includes(character.charCodeAt(0)) ? String.fromCharCode(92) + character : character).join('');
-  const query = {
-    organizationId,
-    ...(status ? { status } : {}),
-    ...(search ? { name: new RegExp(escapedSearch, 'i') } : {}),
-  };
-  return ProductModel.find(query).sort({ name: 1, _id: 1 }).limit(100).lean().exec();
+  const search = typeof filters.search === 'string' ? filters.search.trim().slice(0, 100).toLocaleLowerCase() : '';
+  const organizationObjectId = new Types.ObjectId(organizationId);
+  const candidates = await ProductModel.find({ organizationId: organizationObjectId }).sort({ name: 1, _id: 1 }).limit(500).lean().exec();
+  return candidates
+    .filter((product) => (!status || product.status === status) && (!search || product.name.toLocaleLowerCase().includes(search)))
+    .slice(0, 100);
 }
 export async function createProduct(userId: string, organizationId: string, input: ProductInput) {
   await requirePermission(userId, organizationId, 'products:manage');
