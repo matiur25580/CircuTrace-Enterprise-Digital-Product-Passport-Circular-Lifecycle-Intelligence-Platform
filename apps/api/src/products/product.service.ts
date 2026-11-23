@@ -23,9 +23,14 @@ async function requirePartnerScope(organizationId: string, partnerId?: string | 
 }
 export async function listProducts(userId: string, organizationId: string, filters: { status?: string; search?: string }) {
   await requirePermission(userId, organizationId, 'products:read');
-  const query: Record<string, unknown> = { organizationId };
-  if (filters.status) query.status = filters.status;
-  if (filters.search) query.name = { $regex: filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+  const status = PRODUCT_STATUSES.find((candidate) => candidate === filters.status);
+  const search = typeof filters.search === 'string' ? filters.search.trim().slice(0, 100) : '';
+  const escapedSearch = search.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+  const query = {
+    organizationId,
+    ...(status ? { status } : {}),
+    ...(search ? { name: new RegExp(escapedSearch, 'i') } : {}),
+  };
   return ProductModel.find(query).sort({ name: 1, _id: 1 }).limit(100).lean().exec();
 }
 export async function createProduct(userId: string, organizationId: string, input: ProductInput) {
