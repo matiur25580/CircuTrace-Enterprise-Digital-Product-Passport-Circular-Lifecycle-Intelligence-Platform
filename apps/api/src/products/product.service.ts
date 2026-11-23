@@ -25,7 +25,8 @@ export async function listProducts(userId: string, organizationId: string, filte
   await requirePermission(userId, organizationId, 'products:read');
   const status = PRODUCT_STATUSES.find((candidate) => candidate === filters.status);
   const search = typeof filters.search === 'string' ? filters.search.trim().slice(0, 100) : '';
-  const regexMeta = new Set(['.', '*', '+', '?', '^', '
+  const regexMeta = [36, 40, 41, 42, 43, 46, 63, 91, 92, 93, 94, 123, 124, 125];
+  const escapedSearch = [...search].map((character) => regexMeta.includes(character.charCodeAt(0)) ? String.fromCharCode(92) + character : character).join('');
   const query = {
     organizationId,
     ...(status ? { status } : {}),
