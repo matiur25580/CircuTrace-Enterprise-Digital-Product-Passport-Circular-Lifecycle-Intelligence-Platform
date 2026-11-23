@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { AuthError } from '../auth/auth-error.js';
 import { requirePermission } from '../organizations/organization.service.js';
 import { PartnerModel } from '../partners/partner.model.js';
-import { ProductModel } from './product.model.js';
+import { PRODUCT_STATUSES, ProductModel } from './product.model.js';
 import { ComponentModel } from './component.model.js';
 import { MaterialModel, type MATERIAL_CATEGORIES } from './material.model.js';
 import { ProductVariantModel } from './product-variant.model.js';
@@ -17,16 +17,21 @@ function conflict(error: unknown, code: string, message: string): never {
 async function requirePartnerScope(organizationId: string, partnerId?: string | null) {
   if (!partnerId) return null;
   if (invalidId(partnerId)) throw notFound('PARTNER_NOT_FOUND', 'The partner was not found.');
-  const partner = await PartnerModel.findOne({ _id: partnerId, organizationId, status: 'active' }).select('_id').lean().exec();
+  const partnerObjectId = new Types.ObjectId(partnerId);
+  const organizationObjectId = new Types.ObjectId(organizationId);
+  const partner = await PartnerModel.findOne({ _id: partnerObjectId, organizationId: organizationObjectId, status: 'active' }).select('_id').lean().exec();
   if (!partner) throw notFound('PARTNER_NOT_FOUND', 'The partner was not found.');
   return partner._id;
 }
 export async function listProducts(userId: string, organizationId: string, filters: { status?: string; search?: string }) {
   await requirePermission(userId, organizationId, 'products:read');
-  const query: Record<string, unknown> = { organizationId };
-  if (filters.status) query.status = filters.status;
-  if (filters.search) query.name = { $regex: filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
-  return ProductModel.find(query).sort({ name: 1, _id: 1 }).limit(100).lean().exec();
+  const status = PRODUCT_STATUSES.find((candidate) => candidate === filters.status);
+  const search = typeof filters.search === 'string' ? filters.search.trim().slice(0, 100).toLocaleLowerCase() : '';
+  const organizationObjectId = new Types.ObjectId(organizationId);
+  const candidates = await ProductModel.find({ organizationId: organizationObjectId }).sort({ name: 1, _id: 1 }).limit(500).lean().exec();
+  return candidates
+    .filter((product) => (!status || product.status === status) && (!search || product.name.toLocaleLowerCase().includes(search)))
+    .slice(0, 100);
 }
 export async function createProduct(userId: string, organizationId: string, input: ProductInput) {
   await requirePermission(userId, organizationId, 'products:manage');
@@ -45,8 +50,11 @@ export async function getProduct(userId: string, organizationId: string, product
 export async function updateProduct(userId: string, organizationId: string, productId: string, input: Partial<ProductInput>) {
   await requirePermission(userId, organizationId, 'products:manage');
   if (invalidId(productId)) throw notFound('PRODUCT_NOT_FOUND', 'The product was not found.');
-  const update: Record<string, unknown> = { ...input, updatedBy: userId };
+  const update: Record<string, unknown> = { updatedBy: userId };
   if (input.sku !== undefined) update.sku = input.sku.trim().toUpperCase();
+  if (input.name !== undefined) update.name = input.name.trim();
+  if (input.description !== undefined) update.description = input.description?.trim() ?? null;
+  if (input.category !== undefined) update.category = input.category?.trim() ?? null;
   if (input.brandPartnerId !== undefined) update.brandPartnerId = await requirePartnerScope(organizationId, input.brandPartnerId);
   try {
     const product = await ProductModel.findOneAndUpdate({ _id: productId, organizationId }, { $set: update }, { new: true, runValidators: true }).lean().exec();
