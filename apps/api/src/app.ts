@@ -10,6 +10,7 @@ import { AuthError } from './auth/auth-error.js';
 import { authRouter } from './auth/auth.routes.js';
 import { organizationRouter } from './organizations/organization.routes.js';
 import { partnerRouter } from './partners/partner.routes.js';
+import { productRouter } from './products/product.routes.js';
 import { partnerRelationshipRouter } from './partners/partner-relationship.routes.js';
 import { partnerInvitationAcceptanceRouter, partnerInvitationRouter } from './partners/partner-invitation.routes.js';
 
@@ -75,6 +76,7 @@ app.use('/api/v1/organizations', organizationRouter);
 app.use('/api/v1/organizations/:organizationId/partners/:partnerId/invitations', partnerInvitationRouter);
 app.use('/api/v1/partner-invitations', partnerInvitationAcceptanceRouter);
 app.use('/api/v1/organizations/:organizationId/partners', partnerRouter);
+app.use('/api/v1/organizations/:organizationId/products', productRouter);
 
 app.use((_request, response) => {
   response.status(404).json({

@@ -9,10 +9,10 @@ import { OrganizationModel } from './organization.model.js';
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const slugify = (value: string) => value.trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
 const permissions: Record<OrganizationRole, string[]> = {
-  owner: ['organization:read', 'organization:update', 'organization:archive', 'members:read', 'members:invite', 'members:manage', 'members:remove', 'partners:read', 'partners:manage'],
-  admin: ['organization:read', 'organization:update', 'members:read', 'members:invite', 'members:manage', 'members:remove', 'partners:read', 'partners:manage'],
-  member: ['organization:read', 'members:read', 'partners:read'],
-  viewer: ['organization:read', 'members:read', 'partners:read'],
+  owner: ['organization:read', 'organization:update', 'organization:archive', 'members:read', 'members:invite', 'members:manage', 'members:remove', 'partners:read', 'partners:manage', 'products:read', 'products:manage'],
+  admin: ['organization:read', 'organization:update', 'members:read', 'members:invite', 'members:manage', 'members:remove', 'partners:read', 'partners:manage', 'products:read', 'products:manage'],
+  member: ['organization:read', 'members:read', 'partners:read', 'products:read'],
+  viewer: ['organization:read', 'members:read', 'partners:read', 'products:read'],
 };
 
 export function can(role: OrganizationRole, permission: string) {

@@ -126,3 +126,24 @@ describe('partner directory API', () => {
   });
 
 });
+
+describe('product catalogue API',()=>{
+ beforeEach(()=>{setAccessToken('catalog-token')});
+ it('lists and creates products through the organization scope',async()=>{
+  const f=vi.fn().mockResolvedValueOnce(jsonResponse({data:{products:[{_id:'p1',sku:'SKU1',name:'Jacket',status:'draft'}]}})).mockResolvedValueOnce(jsonResponse({data:{product:{_id:'p2',sku:'SKU2',name:'Boot',status:'draft'}}},201));vi.stubGlobal('fetch',f);
+  expect(await listProducts('org/1',{search:'jack et',status:'draft'})).toHaveLength(1);
+  expect(String(f.mock.calls[0][0])).toContain('/organizations/org%2F1/products?');
+  expect((await createProduct('org1',{sku:'SKU2',name:'Boot'}))._id).toBe('p2');
+ });
+ it('creates nested components and materials under a product',async()=>{
+  const f=vi.fn().mockResolvedValueOnce(jsonResponse({data:{component:{_id:'c1',code:'SHELL',name:'Shell',quantity:1,unit:'piece'}}},201)).mockResolvedValueOnce(jsonResponse({data:{material:{_id:'m1',name:'Polyester',category:'textile',mass:100,massUnit:'g'}}},201));vi.stubGlobal('fetch',f);
+  await createProductComponent('org1','p1',{code:'SHELL',name:'Shell',quantity:1,unit:'piece'});
+  await createProductMaterial('org1','p1','c1',{name:'Polyester',category:'textile',mass:100,massUnit:'g'});
+  expect(String(f.mock.calls[1][0])).toContain('/products/p1/components/c1/materials');
+ });
+ it('loads nested composition records',async()=>{
+  const f=vi.fn().mockResolvedValueOnce(jsonResponse({data:{components:[{_id:'c1'}]}})).mockResolvedValueOnce(jsonResponse({data:{materials:[{_id:'m1'}]}}));vi.stubGlobal('fetch',f);
+  expect(await listProductComponents('org1','p1')).toHaveLength(1);
+  expect(await listProductMaterials('org1','p1','c1')).toHaveLength(1);
+ });
+});
