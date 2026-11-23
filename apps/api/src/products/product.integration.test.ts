@@ -93,5 +93,23 @@ describe('product and material registry (MongoDB integration)', () => {
     const badGtin = await request(app).post(path).set('Authorization', 'Bearer ' + token).send({ sku: 'VAR-BAD', gtin: '4006381333932' });
     expect(badGtin.status).toBe(400);
   });
+  it('treats product search input as literal text and rejects Mongo query operators', async () => {
+    const token = await register('catalog-search@example.com');
+    const org = await request(app).post('/api/v1/organizations').set('Authorization', `Bearer ${token}`).send({ name: 'Search Catalog' });
+    const orgId = org.body.data.organization._id as string;
+    const path = `/api/v1/organizations/${orgId}/products`;
+    await request(app).post(path).set('Authorization', `Bearer ${token}`).send({ sku: 'SEARCH-01', name: 'Plain Jacket' }).expect(201);
+
+    const literalDot = await request(app).get(path).query({ search: '.' }).set('Authorization', `Bearer ${token}`);
+    expect(literalDot.status).toBe(200);
+    expect(literalDot.body.data.products).toHaveLength(0);
+
+    const matchingText = await request(app).get(path).query({ search: 'Jacket' }).set('Authorization', `Bearer ${token}`);
+    expect(matchingText.status).toBe(200);
+    expect(matchingText.body.data.products).toHaveLength(1);
+
+    const operatorInput = await request(app).get(path).query({ 'search[$regex]': '.*' }).set('Authorization', `Bearer ${token}`);
+    expect(operatorInput.status).toBe(400);
+  });
 
 });
