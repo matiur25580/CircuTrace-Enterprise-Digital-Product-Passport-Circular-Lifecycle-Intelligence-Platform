@@ -216,3 +216,28 @@ export async function updatePartnerRelationshipStatus(
   );
   return result.relationship;
 }
+
+export type ProductStatus = 'draft' | 'active' | 'archived';
+export type MaterialCategory = 'metal' | 'plastic' | 'textile' | 'chemical' | 'wood' | 'glass' | 'paper' | 'composite' | 'other';
+export interface Product { _id:string; organizationId:string; sku:string; name:string; description?:string|null; category?:string|null; status:ProductStatus; createdAt:string; updatedAt:string }
+export interface ProductComponent { _id:string; code:string; name:string; quantity:number; unit:string }
+export interface ProductMaterial { _id:string; name:string; category:MaterialCategory; mass:number; massUnit:'g'|'kg'|'mg'; recycledContentPct?:number|null; originCountryCode?:string|null }
+export async function listProducts(org:string, filters:{search?:string;status?:ProductStatus|''}={}):Promise<Product[]> {
+ const p=new URLSearchParams(); if(filters.search?.trim())p.set('search',filters.search.trim()); if(filters.status)p.set('status',filters.status);
+ const q=p.size?'?'+p.toString():''; return (await request<{products:Product[]}>('/organizations/'+encodeURIComponent(org)+'/products'+q)).products;
+}
+export async function createProduct(org:string,input:{sku:string;name:string;description?:string;category?:string}):Promise<Product> {
+ return (await request<{product:Product}>('/organizations/'+encodeURIComponent(org)+'/products',{method:'POST',body:JSON.stringify(input)})).product;
+}
+export async function listProductComponents(org:string,product:string):Promise<ProductComponent[]> {
+ return (await request<{components:ProductComponent[]}>('/organizations/'+encodeURIComponent(org)+'/products/'+encodeURIComponent(product)+'/components')).components;
+}
+export async function createProductComponent(org:string,product:string,input:{code:string;name:string;quantity:number;unit:string}):Promise<ProductComponent> {
+ return (await request<{component:ProductComponent}>('/organizations/'+encodeURIComponent(org)+'/products/'+encodeURIComponent(product)+'/components',{method:'POST',body:JSON.stringify(input)})).component;
+}
+export async function listProductMaterials(org:string,product:string,component:string):Promise<ProductMaterial[]> {
+ return (await request<{materials:ProductMaterial[]}>('/organizations/'+encodeURIComponent(org)+'/products/'+encodeURIComponent(product)+'/components/'+encodeURIComponent(component)+'/materials')).materials;
+}
+export async function createProductMaterial(org:string,product:string,component:string,input:{name:string;category:MaterialCategory;mass:number;massUnit:'g'|'kg'|'mg';recycledContentPct?:number;originCountryCode?:string}):Promise<ProductMaterial> {
+ return (await request<{material:ProductMaterial}>('/organizations/'+encodeURIComponent(org)+'/products/'+encodeURIComponent(product)+'/components/'+encodeURIComponent(component)+'/materials',{method:'POST',body:JSON.stringify(input)})).material;
+}
