@@ -51,8 +51,11 @@ export async function getProduct(userId: string, organizationId: string, product
 export async function updateProduct(userId: string, organizationId: string, productId: string, input: Partial<ProductInput>) {
   await requirePermission(userId, organizationId, 'products:manage');
   if (invalidId(productId)) throw notFound('PRODUCT_NOT_FOUND', 'The product was not found.');
-  const update: Record<string, unknown> = { ...input, updatedBy: userId };
+  const update: Record<string, unknown> = { updatedBy: userId };
   if (input.sku !== undefined) update.sku = input.sku.trim().toUpperCase();
+  if (input.name !== undefined) update.name = input.name.trim();
+  if (input.description !== undefined) update.description = input.description?.trim() ?? null;
+  if (input.category !== undefined) update.category = input.category?.trim() ?? null;
   if (input.brandPartnerId !== undefined) update.brandPartnerId = await requirePartnerScope(organizationId, input.brandPartnerId);
   try {
     const product = await ProductModel.findOneAndUpdate({ _id: productId, organizationId }, { $set: update }, { new: true, runValidators: true }).lean().exec();
