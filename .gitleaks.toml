@@ -1,0 +1,4 @@
+[allowlist]
+description = "Ignore the documented non-secret example token placeholder in the API environment template."
+paths = ['''apps/api/\.env\.example''']
+regexes = ['''replace-this-with-a-unique-secret-at-least-32-characters''']
