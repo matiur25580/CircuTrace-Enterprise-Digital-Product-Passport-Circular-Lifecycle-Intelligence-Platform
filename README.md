@@ -1,114 +1,162 @@
 # CircuTrace
-### Enterprise Digital Product Passport & Circular Lifecycle Intelligence Platform
 
-**Making every product traceable, verifiable, sustainable, and circular.**
+**Enterprise Digital Product Passport & Circular Lifecycle Intelligence Platform**
 
-CircuTrace is an enterprise platform concept for managing trusted product information across the full lifecycle: design, sourcing, manufacturing, distribution, use, repair, reuse, refurbishment, and end-of-life recovery.
+> Make product identity, lifecycle events and circularity evidence traceable across the value chain.
 
-It is being developed as a production-oriented **MERN** application with a modular architecture, evidence-backed data, tenant isolation, and auditable workflows.
+## 1. Product overview
 
-> **Project status:** Architecture, MERN workspace foundation, and the initial API identity/authentication layer are implemented on milestone branches. Tenant membership, organization authorization, product workflows, and compliance capabilities remain planned.
+CircuTrace is an enterprise platform concept for managing trusted product information across design, sourcing, manufacturing, distribution, use, repair, reuse, refurbishment and end-of-life recovery.
 
-## Why CircuTrace
+## 2. Current implementation
 
-Product data is fragmented across manufacturers, suppliers, logistics providers, service partners, and recyclers. Sustainability and compliance claims are difficult to verify when evidence is disconnected from the product and its component history.
+- Product, component and material registry foundations.
+- Append-oriented lifecycle event history across product lifecycle stages.
+- Circularity metrics and JSON product passport export.
+- Allowlisted passport serialization and private/no-store response controls.
+- Evidence ledger with SHA-256 record chaining and sequence verification.
+- Tenant-scoped product evidence APIs and verification documentation.
 
-CircuTrace is designed to provide:
-- A persistent digital identity and passport for each product.
-- Component, material, supplier, and origin traceability.
-- Evidence-linked compliance and sustainability claims.
-- Lifecycle event history with accountable actors and timestamps.
-- Repair, refurbishment, resale, reuse, and recycling workflows.
-- Role-scoped collaboration across organizations.
-- A public verification experience for approved passport information.
+**Verification boundary:** the evidence ledger verifies stored ledger metadata and hash-chain consistency. It does not independently fetch external files to validate their supplied digest or verify supplier signatures/certificates. The current DS evidence state must not be presented as independently verified source evidence. Organization authorization and production readiness require further review.
 
-## Product domains
+## 3. Technology stack
 
-| Domain | Intended capability |
-| --- | --- |
-| Product passport | Product identity, attributes, ownership and lifecycle summary |
-| Product composition | Bill of materials, components, materials and provenance |
-| Supplier network | Supplier onboarding, declarations and collaboration |
-| Traceability | Sourcing, production, custody and distribution events |
-| Evidence vault | Versioned documents, attestations and claim evidence |
-| Compliance | Configurable requirements, controls, reviews and audit trails |
-| Circularity | Repair, maintenance, refurbishment, reuse and recovery |
-| Intelligence | Explainable indicators, data quality and risk insights |
-| Integrations | APIs, webhooks and enterprise data exchange |
+React 19 · TypeScript · Vite · Node.js · Express 5 · MongoDB · Mongoose · Zod · pnpm 9.15.4 · Turborepo.
 
-## Technology direction
+## 4. Architecture
 
-- **Web:** React, TypeScript, Vite, Tailwind CSS
-- **API:** Node.js, Express, TypeScript
-- **Data:** MongoDB, Mongoose
-- **Client data:** TanStack Query; Zustand where local shared state is justified
-- **Async processing:** Redis and BullMQ (introduced when required)
-- **Realtime:** Socket.IO (introduced when required)
-- **Quality:** Jest/Vitest, Supertest, Playwright, static analysis
-- **Delivery:** Docker, GitHub Actions, environment-specific deployment configuration
+- `apps/web`: React product and partner workspace.
+- `apps/api`: Express API, product domain, lifecycle and evidence services.
+- `packages/shared-types` and `packages/validation`: shared domain types and schemas.
+- `docs`: architecture, security, product design and development guides.
+- Modular monolith first; split services only when ownership or scale justifies it.
 
-The initial architecture is a **modular monolith**. Modules have explicit boundaries; independent services will be considered only when operational scale or ownership justifies them.
+## 5. Local development
 
-## Architecture principles
+Prerequisites: Node.js 22+, pnpm 9.15.4 (Corepack recommended), Docker and MongoDB.
 
-1. Tenant isolation is enforced at the API and data-access boundaries.
-2. Authorization is deny-by-default and checked server-side.
-3. Sensitive actions are validated, authorized, and audit logged.
-4. Claims are linked to evidence, provenance, and review state.
-5. Derived scores are explainable indicators—not regulatory certifications.
-6. External integrations are authenticated, bounded, observable, and retry-safe.
-7. Security, accessibility, testability, and operability are built into delivery.
-
-## Repository layout (target)
-
-```text
-apps/
-  web/                 React + TypeScript application
-  api/                 Express + TypeScript API
-  worker/              Background jobs (when introduced)
-packages/
-  shared-types/        Shared domain contracts
-  validation/          Shared schemas and validation
-  ui/                  Reusable accessible UI primitives
-infrastructure/
-  docker/
-  scripts/
-docs/
-  architecture/
-  api/
-  database/
-  security/
-  development/
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+# Configure a unique AUTH_ACCESS_TOKEN_SECRET and local MONGODB_URI.
+docker compose up -d mongodb
+pnpm dev
 ```
 
-## Application foundation
+Web commonly runs at `http://localhost:5173`; API health commonly runs at `http://localhost:4000/api/v1/health`.
 
-The MERN workspace foundation is available on `feat/milestone-2-mern-foundation`; the identity and authentication foundation is available on `feat/milestone-3-enterprise-auth` (draft PR #2). The API includes registration, login, refresh-token rotation, logout, protected identity and session-management endpoints. MongoDB-backed lifecycle integration tests and the latest CI verification passed. See [local development setup](docs/development/local-setup.md) and [authentication security design](docs/security/authentication.md).
+Quality checks:
 
-## Documentation
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm format:check
+```
+
+## 6. Security and responsible data handling
+
+Tenant isolation and server-side authorization must be enforced at every data boundary. Treat supplier declarations, evidence URLs, product data and imported files as untrusted. Use HTTPS for evidence references, bound payload size, retain audit metadata without unnecessary sensitive data, and never commit signing keys or credentials. MongoDB transactions require replica-set or sharded-cluster support. Use synthetic data in demos and obtain qualified legal/domain review before making regulatory or environmental claims.
+
+## 7. Illustrative dashboard gallery
+
+These 12 views are **illustrative SVG dashboard concepts**, not screenshots captured from a running deployment. They contain synthetic sample values and do not establish that every depicted feature is implemented. They are arranged in a single vertical column for full-width inspection.
+
+### 01. Circularity command center
+
+Circularity command center concept summarizing product volumes, lifecycle stage distribution, evidence coverage and recovery outcomes. All values are synthetic.
+
+![CircuTrace Circularity command center](docs/assets/dashboard/01-circularity-command-center.svg)
+
+### 02. Digital product passport
+
+Digital product passport concept presenting approved identity, composition, provenance, lifecycle summary and public disclosure status. All product data is synthetic.
+
+![CircuTrace Digital product passport](docs/assets/dashboard/02-digital-product-passport.svg)
+
+### 03. Product & material registry
+
+Product and material registry concept for SKUs, variants, components, material declarations and traceability completeness. All records are synthetic.
+
+![CircuTrace Product & material registry](docs/assets/dashboard/03-product-material-registry.svg)
+
+### 04. Supplier provenance network
+
+Supplier provenance network concept showing supplier relationships, origin declarations, evidence status and unresolved verification gaps. All organizations are illustrative.
+
+![CircuTrace Supplier provenance network](docs/assets/dashboard/04-supplier-provenance-network.svg)
+
+### 05. Lifecycle event ledger
+
+Lifecycle event ledger concept for manufacture, transfer, repair, refurbishment, reuse, recycling and disposal events with accountable timestamps. All events are synthetic.
+
+![CircuTrace Lifecycle event ledger](docs/assets/dashboard/05-lifecycle-event-ledger.svg)
+
+### 06. Evidence integrity explorer
+
+Evidence integrity explorer concept for document provenance, version history, attestations, review state and integrity checks. All evidence is illustrative.
+
+![CircuTrace Evidence integrity explorer](docs/assets/dashboard/06-evidence-integrity-explorer.svg)
+
+### 07. Repair & refurbishment
+
+Repair and refurbishment workspace concept tracking service history, replaced components, condition and next-life readiness. All product records are synthetic.
+
+![CircuTrace Repair & refurbishment](docs/assets/dashboard/07-repair-refurbishment.svg)
+
+### 08. Circularity performance
+
+Circularity performance view concept comparing reuse, repair, recovery and material-loop indicators with transparent calculation context. All metrics are synthetic.
+
+![CircuTrace Circularity performance](docs/assets/dashboard/08-circularity-performance.svg)
+
+### 09. Compliance & claim review
+
+Compliance and claim review workspace concept linking sustainability claims to supporting evidence, reviewers and decision states. It does not certify compliance.
+
+![CircuTrace Compliance & claim review](docs/assets/dashboard/09-compliance-claim-review.svg)
+
+### 10. Public passport verification
+
+Public passport verification concept showing only approved disclosure fields and a verifiable product identity summary. All example information is synthetic.
+
+![CircuTrace Public passport verification](docs/assets/dashboard/10-public-passport-verification.svg)
+
+### 11. Product recall & risk
+
+Product recall and risk workspace concept for affected batches, component relationships, risk signals and accountable response actions. All records are synthetic.
+
+![CircuTrace Product recall & risk](docs/assets/dashboard/11-product-recall-risk.svg)
+
+### 12. Circular partner ecosystem
+
+Circular partner ecosystem concept showing manufacturers, repairers, logistics providers and recyclers connected through controlled data exchange. All partners are illustrative.
+
+![CircuTrace Circular partner ecosystem](docs/assets/dashboard/12-circular-partner-ecosystem.svg)
+
+
+## 8. Engineering quality
+
+GitHub Actions provides build/test automation, CodeQL, secret scanning and dependency auditing. Review current advisory results before release. Committed lockfiles and frozen dependency installs are enforced in CI; the latest audit reports zero known vulnerabilities. Remaining engineering priorities include ongoing advisory monitoring, tenant authorization integration tests, end-to-end accessibility coverage, immutable action pinning, operational monitoring and backup/restore testing.
+
+## 9. Documentation
 
 - [Architecture overview](docs/architecture/overview.md)
-- [System design](docs/architecture/system-design.md)
-- [ADR 0001: Modular monolith](docs/architecture/adr/0001-modular-monolith.md)
-- [Domain model](docs/database/domain-model.md)
-- [API conventions](docs/api/api-conventions.md)
-- [Tenant isolation and security](docs/security/tenant-isolation.md)
-- [Authentication design and API](docs/security/authentication.md)
-- [Development roadmap](docs/development/roadmap.md)
-- [Contributing](CONTRIBUTING.md)
+- [Local development](docs/development/local-setup.md)
+- [Tenant isolation](docs/security/tenant-isolation.md)
+- [Verifiable passport evidence ledger](docs/product/verifiable-passport-evidence-ledger.md)
 
-## Delivery roadmap
+## 10. Roadmap
 
-The project will progress through small, verifiable milestones: architecture and tooling; identity and tenancy; organization and supplier collaboration; product and passport domains; traceability and evidence; compliance and circular workflows; intelligence; integrations; and production hardening.
+1. Complete organization membership and tenant-scoped authorization.
+2. Strengthen evidence verification with external-byte digest validation and independently managed issuer trust roots.
+3. Expand lifecycle and partner workflow integration tests.
+4. Commit and enforce frozen pnpm lockfiles and remediate remaining advisories.
+5. Add browser E2E tests, accessibility checks, observability and production runbooks.
 
-## Development status
+## 11. Responsible claims
 
-The API foundation and identity endpoints are implemented, with automated validation, token, and password tests. Organization membership and tenant-scoped authorization are intentionally deferred to Milestone 4. Production deployment, email verification, password recovery, MFA, and independent security review are not yet delivered.
-
-## Responsible product claims
-
-CircuTrace is intended to support evidence management and operational workflows. It does not itself establish legal compliance, independently certify products, or guarantee the truth of supplier-provided information. Regulatory applicability and required evidence must be determined by qualified domain and legal stakeholders.
-
-## License
-
-No open-source license has been applied yet. All rights are reserved unless a license is added by the repository owner.
+CircuTrace supports evidence management and operational workflows; it does not independently certify products, guarantee supplier claims or establish legal compliance. Regulatory applicability and required evidence must be determined by qualified stakeholders.
