@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { AuthError } from '../auth/auth-error.js';
 import { requirePermission } from '../organizations/organization.service.js';
 import { PartnerModel } from '../partners/partner.model.js';
-import { ProductModel } from './product.model.js';
+import { PRODUCT_STATUSES, ProductModel } from './product.model.js';
 import { ComponentModel } from './component.model.js';
 import { MaterialModel, type MATERIAL_CATEGORIES } from './material.model.js';
 import { ProductVariantModel } from './product-variant.model.js';
