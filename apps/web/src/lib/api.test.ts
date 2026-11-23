@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { acceptPartnerInvitation, createPartner, createPartnerInvitation, createPartnerRelationship, getAccessToken, listOrganizations, listPartnerInvitations, listPartnerRelationships, listPartners, login, logout, refreshSession, revokePartnerInvitation, setAccessToken, updatePartner, updatePartnerRelationshipStatus } from './api';
+import { acceptPartnerInvitation, createPartner, createPartnerComponent, createPartnerInvitation, createPartnerRelationship, createProduct, createProductComponent, createProductMaterial, getAccessToken, listOrganizations, listPartnerInvitations, listPartnerRelationships, listPartners, listProductComponents, listProductMaterials, listProducts, login, logout, refreshSession, revokePartnerInvitation, setAccessToken, updatePartner, updatePartnerRelationshipStatus } from './api';
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
