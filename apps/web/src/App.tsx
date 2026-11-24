@@ -1,3 +1,4 @@
+// Keep the landing-page capability highlights together as data for consistent rendering.
 const capabilities = [
   { number: '01', title: 'Product passports', description: 'A structured identity for product attributes, disclosures, and lifecycle history.' },
   { number: '02', title: 'Verified provenance', description: 'Connect components, materials, suppliers, and supporting evidence.' },
