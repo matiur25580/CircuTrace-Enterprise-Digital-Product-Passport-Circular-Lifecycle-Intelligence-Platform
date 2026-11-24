@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { app } from './app.js';
 import { env } from './config/env.js';
 
+// Connect the database before listening; only non-production environments may start without it.
 async function start(): Promise<void> {
   if (env.MONGODB_URI) {
     await mongoose.connect(env.MONGODB_URI);
