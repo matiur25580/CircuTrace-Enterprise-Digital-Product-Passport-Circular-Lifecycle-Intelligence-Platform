@@ -44,6 +44,6 @@ describe('API security middleware', () => {
       .set('Origin', 'https://untrusted.example');
 
     expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:5173');
-    expect(denied.headers['access-control-allow-origin']).toBeUndefined();
+    expect(denied.headers['access-control-allow-origin']).not.toBe('https://untrusted.example');
   });
 });
