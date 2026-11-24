@@ -16,4 +16,5 @@ export interface ApiError {
   };
 }
 
+// Shared discriminated envelope keeps success payloads and structured API errors consistent across packages.
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;
