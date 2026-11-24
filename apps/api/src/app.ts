@@ -6,6 +6,7 @@ import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import { env } from './config/env.js';
 
+// Assemble the API middleware stack and lightweight health/readiness endpoints.
 export const app: Express = express();
 
 app.disable('x-powered-by');
